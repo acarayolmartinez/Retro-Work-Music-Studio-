@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 int main() {
@@ -32,6 +33,34 @@ int main() {
     if (silent_metrics.peak_amplitude != 0.0f ||
         silent_metrics.rms_amplitude != 0.0f) {
         std::cerr << "Silence analysis test failed." << std::endl;
+        return 1;
+    }
+
+    const std::vector<float> envelope_samples = {
+        1.0f, -1.0f, 1.0f, -1.0f,
+        0.5f, -0.5f
+    };
+    const rms::audio::AudioBuffer envelope_buffer(
+        44100, 2, envelope_samples);
+    const std::vector<float> envelope =
+        rms::audio::AudioAnalyzer::rms_envelope(envelope_buffer, 2);
+
+    if (envelope.size() != 2 ||
+        std::fabs(envelope[0] - 1.0f) > 0.0001f ||
+        std::fabs(envelope[1] - 0.5f) > 0.0001f) {
+        std::cerr << "RMS envelope test failed." << std::endl;
+        return 1;
+    }
+
+    bool rejected_zero_window = false;
+    try {
+        rms::audio::AudioAnalyzer::rms_envelope(buffer, 0);
+    } catch (const std::invalid_argument&) {
+        rejected_zero_window = true;
+    }
+
+    if (!rejected_zero_window) {
+        std::cerr << "Zero-sized RMS window was not rejected." << std::endl;
         return 1;
     }
 
