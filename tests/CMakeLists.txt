@@ -77,3 +77,23 @@ add_test(
     NAME rms.audio.transient_detector
     COMMAND rms_test_transient_detector
 )
+
+add_executable(rms_test_beat_interval_analyzer
+    test_beat_interval_analyzer.cpp
+)
+
+target_link_libraries(rms_test_beat_interval_analyzer
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_beat_interval_analyzer PRIVATE /W4)
+else()
+    target_compile_options(rms_test_beat_interval_analyzer PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.beat_interval_analyzer
+    COMMAND rms_test_beat_interval_analyzer
+)
