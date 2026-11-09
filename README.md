@@ -13,9 +13,9 @@ The first milestone is a **Music Analyzer** that can import audio and help estim
 
 ### Project status
 
-**v0.1.0 — Genesis / Project Bootstrap**
+**v0.2.0 — Application Skeleton (in progress)**
 
-This initial milestone establishes project vision, architecture direction, contribution guidelines, and development roadmap. It does not yet include an audio engine or working analyzer.
+The repository now contains an initial CMake-based C++11 executable and a small core application module. Audio, DSP, analysis, and desktop UI functionality have not been implemented yet.
 
 ### Technology direction
 
@@ -32,9 +32,27 @@ The entire application, including its desktop interface, will be developed in **
 
 No C#/.NET or separate-language UI is planned.
 
-### Project format
+### Build
 
-The proposed native project extension is `.rms`. Its structure and compatibility rules will be defined before implementation.
+Requirements: CMake 3.10 or newer and a C++ compiler with C++11 support.
+
+```sh
+cmake -S . -B build
+cmake --build build
+./build/rms
+```
+
+On Windows, run the generated executable from the build directory (for example, `build\Debug\rms.exe` with a multi-configuration generator).
+
+### Source layout
+
+```text
+include/rms/core/   Public core headers
+src/core/           Core implementation
+src/main.cpp        Application entry point
+tests/              Test build configuration (tests to be added)
+docs/               Project documentation
+```
 
 ## Español
 
@@ -44,9 +62,9 @@ El primer hito será un **Music Analyzer** capaz de importar audio y ayudar a es
 
 ### Estado del proyecto
 
-**v0.1.0 — Genesis / Project Bootstrap**
+**v0.2.0 — Application Skeleton (en desarrollo)**
 
-Este hito inicial establece la visión, la orientación arquitectónica, las pautas de contribución y la hoja de ruta. Todavía no incluye un motor de audio ni un analizador funcional.
+El repositorio ya contiene un ejecutable inicial C++11 basado en CMake y un pequeño módulo de aplicación principal. Todavía no se han implementado las funciones de audio, DSP, análisis ni interfaz gráfica.
 
 ### Orientación tecnológica
 
@@ -63,24 +81,31 @@ Toda la aplicación, incluida la interfaz de escritorio, se desarrollará en **C
 
 No está previsto utilizar C#/.NET ni desarrollar la interfaz en otro lenguaje.
 
+### Compilación
+
+Requisitos: CMake 3.10 o superior y un compilador compatible con C++11.
+
+```sh
+cmake -S . -B build
+cmake --build build
+./build/rms
+```
+
+En Windows, ejecuta el archivo generado dentro de la carpeta de compilación (por ejemplo, `build\Debug\rms.exe` con un generador multiconfiguración).
+
+### Estructura del código
+
+```text
+include/rms/core/   Cabeceras públicas del núcleo
+src/core/           Implementación del núcleo
+src/main.cpp        Punto de entrada
+tests/              Configuración de pruebas (pendientes)
+docs/               Documentación del proyecto
+```
+
 ### Formato de proyecto
 
 La extensión nativa propuesta es `.rms`. Su estructura y reglas de compatibilidad se definirán antes de implementarla.
-
-## Repository structure / Estructura del repositorio
-
-```text
-.
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── VERSIONING.md
-│   └── VISION.md
-├── .gitignore
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── README.md
-└── ROADMAP.md
-```
 
 ## License / Licencia
 
