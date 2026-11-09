@@ -17,18 +17,20 @@ The first milestone is a **Music Analyzer** that can import audio and help estim
 
 This initial milestone establishes project vision, architecture direction, contribution guidelines, and development roadmap. It does not yet include an audio engine or working analyzer.
 
-### Planned technology direction
+### Technology direction
 
-- C# and .NET
-- Avalonia UI for a cross-platform desktop interface
-- MVVM architecture
-- Audio I/O abstraction, with NAudio as a possible implementation
-- Custom DSP and FFT components
-- xUnit for tests
-- JSON for configuration and project metadata
-- Possible ONNX Runtime integration in a later phase
+The entire application, including its desktop interface, will be developed in **C++11**.
 
-These are provisional choices and may change as the project evolves.
+- C++11 as the required language standard across all RMS modules.
+- CMake for cross-platform build configuration.
+- A modular architecture separating core/domain, audio, DSP, analysis, and desktop UI.
+- PortAudio as the initial candidate for cross-platform audio I/O.
+- Custom DSP utilities, with an FFT implementation to be selected (own implementation or a compatible library).
+- A C++11-compatible desktop UI toolkit; wxWidgets and FLTK are candidates to evaluate.
+- CTest plus a C++11-compatible testing framework.
+- Dependencies must be checked for C++11 compatibility before adoption.
+
+No C#/.NET or separate-language UI is planned.
 
 ### Project format
 
@@ -46,18 +48,20 @@ El primer hito será un **Music Analyzer** capaz de importar audio y ayudar a es
 
 Este hito inicial establece la visión, la orientación arquitectónica, las pautas de contribución y la hoja de ruta. Todavía no incluye un motor de audio ni un analizador funcional.
 
-### Orientación tecnológica prevista
+### Orientación tecnológica
 
-- C# y .NET
-- Avalonia UI para una interfaz de escritorio multiplataforma
-- Arquitectura MVVM
-- Abstracción de entrada/salida de audio, con NAudio como posible implementación
-- Componentes DSP y FFT propios
-- xUnit para pruebas
-- JSON para configuración y metadatos
-- Posible integración de ONNX Runtime en una fase posterior
+Toda la aplicación, incluida la interfaz de escritorio, se desarrollará en **C++11**.
 
-Estas decisiones son provisionales y podrán cambiar durante el desarrollo.
+- C++11 como estándar obligatorio en todos los módulos de RMS.
+- CMake para configurar compilaciones multiplataforma.
+- Arquitectura modular que separa núcleo/dominio, audio, DSP, análisis e interfaz de escritorio.
+- PortAudio como primera opción candidata para entrada/salida de audio multiplataforma.
+- Utilidades DSP propias y una implementación FFT aún por decidir (propia o mediante una biblioteca compatible).
+- Biblioteca de interfaz de escritorio compatible con C++11; wxWidgets y FLTK son candidatas para evaluar.
+- CTest y un framework de pruebas compatible con C++11.
+- Se comprobará la compatibilidad con C++11 de cada dependencia antes de incorporarla.
+
+No está previsto utilizar C#/.NET ni desarrollar la interfaz en otro lenguaje.
 
 ### Formato de proyecto
 
