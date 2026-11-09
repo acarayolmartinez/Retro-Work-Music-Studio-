@@ -14,6 +14,7 @@ option(RMS_BUILD_TESTS "Build RMS unit tests" OFF)
 
 add_library(rms_core
     src/core/application.cpp
+    src/audio/audio_buffer.cpp
 )
 
 target_include_directories(rms_core
