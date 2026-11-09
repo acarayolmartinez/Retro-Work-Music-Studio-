@@ -1,24 +1,42 @@
-[Bb]in/
-[Oo]bj/
-[Dd]ebug/
-[Rr]elease/
-artifacts/
+# CMake and native build output
+/build/
+/cmake-build-*/
+/CMakeFiles/
+/CMakeCache.txt
+/CTestTestfile.cmake
+/Testing/
+/compile_commands.json
+/Makefile
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.ilk
+
+# IDEs
 .vs/
 .vscode/
 .idea/
 *.user
 *.suo
 *.sln.docstates
-.nuget/
-TestResults/
-coverage/
-coverage.*
+
+# Logs and temporary files
 *.log
 *.tmp
 *.temp
+
+# OS files
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Environment and secrets
 .env
 .env.*
 !.env.example
