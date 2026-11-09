@@ -13,11 +13,13 @@ La hoja de ruta marca una dirección; no constituye un compromiso de fechas.
 
 ## v0.2.0 — Application Skeleton
 
-- [ ] Create the CMake project with C++11 explicitly enforced
-- [ ] Establish core, audio, DSP, analyzer, and desktop modules
+- [x] Create the CMake project with C++11 explicitly enforced
+- [x] Add the initial core module and executable entry point
+- [x] Add compiler warnings and a basic build configuration
+- [ ] Establish audio, DSP, analyzer, and desktop UI modules
 - [ ] Evaluate and select a C++11-compatible desktop UI toolkit
-- [ ] Add compiler warnings and a basic logging strategy
 - [ ] Add automated build and test workflow
+- [ ] Add unit tests and select a C++11-compatible test framework
 - [ ] Define the first `.rms` project-file specification
 
 ## v0.3.0 — Audio Foundation
