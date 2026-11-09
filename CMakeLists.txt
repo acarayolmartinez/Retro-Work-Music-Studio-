@@ -16,6 +16,7 @@ add_library(rms_core
     src/core/application.cpp
     src/audio/audio_buffer.cpp
     src/audio/audio_analyzer.cpp
+    src/audio/transient_detector.cpp
 )
 
 target_include_directories(rms_core
