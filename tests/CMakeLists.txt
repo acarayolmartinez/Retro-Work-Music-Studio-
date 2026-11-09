@@ -57,3 +57,23 @@ add_test(
     NAME rms.audio.analyzer
     COMMAND rms_test_audio_analyzer
 )
+
+add_executable(rms_test_transient_detector
+    test_transient_detector.cpp
+)
+
+target_link_libraries(rms_test_transient_detector
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_transient_detector PRIVATE /W4)
+else()
+    target_compile_options(rms_test_transient_detector PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.transient_detector
+    COMMAND rms_test_transient_detector
+)
