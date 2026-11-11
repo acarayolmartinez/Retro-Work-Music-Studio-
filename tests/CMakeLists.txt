@@ -177,3 +177,23 @@ add_test(
     NAME rms.audio.melody_tracker
     COMMAND rms_test_melody_tracker
 )
+
+add_executable(rms_test_note_event
+    test_note_event.cpp
+)
+
+target_link_libraries(rms_test_note_event
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_note_event PRIVATE /W4)
+else()
+    target_compile_options(rms_test_note_event PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.note_event
+    COMMAND rms_test_note_event
+)
