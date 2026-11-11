@@ -19,6 +19,7 @@ add_library(rms_core
     src/audio/transient_detector.cpp
     src/audio/beat_interval_analyzer.cpp
     src/audio/tempo_estimator.cpp
+    src/audio/key_detector.cpp
 )
 
 target_include_directories(rms_core
