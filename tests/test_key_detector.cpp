@@ -20,27 +20,38 @@ void add_tone(std::vector<float>& samples,
     }
 }
 
+rms::audio::KeyEstimate detect_chord(
+    std::uint32_t sample_rate,
+    std::size_t frames,
+    const double* frequencies,
+    const double* amplitudes,
+    std::size_t count) {
+    std::vector<float> samples(frames, 0.0f);
+    for (std::size_t i = 0; i < count; ++i) {
+        add_tone(samples, sample_rate, frequencies[i],
+                 amplitudes[i], frames);
+    }
+    const rms::audio::AudioBuffer buffer(sample_rate, 1, samples);
+    return rms::audio::KeyDetector::estimate(buffer);
+}
+
 } // namespace
 
 int main() {
     const std::uint32_t sample_rate = 44100;
     const std::size_t frames = 44100;
-    std::vector<float> samples(frames, 0.0f);
 
-    // C major scale: C4, D4, E4, F4, G4, A4, B4.
-    const double frequencies[] = {
-        261.6256, 293.6648, 329.6276, 349.2282,
-        391.9954, 440.0, 493.8833
+    // A C-major tonic triad (C-E-G), supported by quieter scale tones.
+    const double c_major_frequencies[] = {
+        261.6256, 329.6276, 391.9954,
+        293.6648, 349.2282, 440.0, 493.8833
     };
-    for (std::size_t i = 0; i < 7; ++i) {
-        add_tone(samples, sample_rate, frequencies[i],
-                 0.12, frames);
-    }
-
-    const rms::audio::AudioBuffer buffer(
-        sample_rate, 1, samples);
-    const rms::audio::KeyEstimate estimate =
-        rms::audio::KeyDetector::estimate(buffer);
+    const double c_major_amplitudes[] = {
+        0.35, 0.35, 0.35, 0.06, 0.06, 0.06, 0.06
+    };
+    const rms::audio::KeyEstimate estimate = detect_chord(
+        sample_rate, frames, c_major_frequencies,
+        c_major_amplitudes, 7);
 
     if (estimate.key != "C major") {
         std::cerr << "Expected C major, got '" << estimate.key
@@ -54,6 +65,23 @@ int main() {
     }
     if (std::fabs(chroma_total - 1.0) > 0.0001) {
         std::cerr << "Chroma profile should be normalized." << std::endl;
+        return 1;
+    }
+
+    // A-minor tonic triad (A-C-E) should resolve to its relative minor.
+    const double a_minor_frequencies[] = {
+        220.0, 261.6256, 329.6276,
+        293.6648, 349.2282, 391.9954, 493.8833
+    };
+    const double a_minor_amplitudes[] = {
+        0.35, 0.35, 0.35, 0.06, 0.06, 0.06, 0.06
+    };
+    const rms::audio::KeyEstimate minor_estimate = detect_chord(
+        sample_rate, frames, a_minor_frequencies,
+        a_minor_amplitudes, 7);
+    if (minor_estimate.key != "A minor") {
+        std::cerr << "Expected A minor, got '" << minor_estimate.key
+                  << "'." << std::endl;
         return 1;
     }
 
