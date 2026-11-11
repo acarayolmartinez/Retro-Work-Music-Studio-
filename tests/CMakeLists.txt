@@ -117,3 +117,23 @@ add_test(
     NAME rms.audio.tempo_estimator
     COMMAND rms_test_tempo_estimator
 )
+
+add_executable(rms_test_key_detector
+    test_key_detector.cpp
+)
+
+target_link_libraries(rms_test_key_detector
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_key_detector PRIVATE /W4)
+else()
+    target_compile_options(rms_test_key_detector PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.key_detector
+    COMMAND rms_test_key_detector
+)
