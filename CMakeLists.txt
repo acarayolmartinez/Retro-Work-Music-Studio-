@@ -21,6 +21,7 @@ add_library(rms_core
     src/audio/tempo_estimator.cpp
     src/audio/key_detector.cpp
     src/audio/pitch_detector.cpp
+    src/audio/melody_tracker.cpp
 )
 
 target_include_directories(rms_core
