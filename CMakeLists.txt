@@ -22,6 +22,7 @@ add_library(rms_core
     src/audio/key_detector.cpp
     src/audio/pitch_detector.cpp
     src/audio/melody_tracker.cpp
+    src/audio/note_event.cpp
 )
 
 target_include_directories(rms_core
