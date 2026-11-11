@@ -157,3 +157,23 @@ add_test(
     NAME rms.audio.pitch_detector
     COMMAND rms_test_pitch_detector
 )
+
+add_executable(rms_test_melody_tracker
+    test_melody_tracker.cpp
+)
+
+target_link_libraries(rms_test_melody_tracker
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_melody_tracker PRIVATE /W4)
+else()
+    target_compile_options(rms_test_melody_tracker PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.melody_tracker
+    COMMAND rms_test_melody_tracker
+)
