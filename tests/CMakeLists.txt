@@ -137,3 +137,23 @@ add_test(
     NAME rms.audio.key_detector
     COMMAND rms_test_key_detector
 )
+
+add_executable(rms_test_pitch_detector
+    test_pitch_detector.cpp
+)
+
+target_link_libraries(rms_test_pitch_detector
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_pitch_detector PRIVATE /W4)
+else()
+    target_compile_options(rms_test_pitch_detector PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.pitch_detector
+    COMMAND rms_test_pitch_detector
+)
