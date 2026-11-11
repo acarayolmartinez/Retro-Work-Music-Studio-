@@ -97,3 +97,23 @@ add_test(
     NAME rms.audio.beat_interval_analyzer
     COMMAND rms_test_beat_interval_analyzer
 )
+
+add_executable(rms_test_tempo_estimator
+    test_tempo_estimator.cpp
+)
+
+target_link_libraries(rms_test_tempo_estimator
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_tempo_estimator PRIVATE /W4)
+else()
+    target_compile_options(rms_test_tempo_estimator PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.tempo_estimator
+    COMMAND rms_test_tempo_estimator
+)
