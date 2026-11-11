@@ -9,11 +9,26 @@
 namespace rms {
 namespace audio {
 
+struct TempoEstimate {
+    double bpm;
+    double confidence;
+
+    TempoEstimate(double tempo = 0.0, double certainty = 0.0)
+        : bpm(tempo), confidence(certainty) {}
+};
+
 class TempoEstimator {
 public:
-    // Estimates BPM from the median interval between consecutive transients.
-    // Returns 0.0 when there are too few events or the result is outside
-    // the requested BPM range.
+    // Estimates tempo and interval regularity. Confidence is in [0, 1].
+    // Half/double-time candidates are considered only when the base tempo
+    // falls outside the requested range.
+    static TempoEstimate estimate(
+        const std::vector<Transient>& transients,
+        std::uint32_t sample_rate,
+        double minimum_bpm = 40.0,
+        double maximum_bpm = 240.0);
+
+    // Compatibility method: returns only the estimated BPM.
     static double estimate_bpm(
         const std::vector<Transient>& transients,
         std::uint32_t sample_rate,
