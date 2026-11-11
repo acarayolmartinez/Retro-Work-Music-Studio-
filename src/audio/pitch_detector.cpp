@@ -70,8 +70,8 @@ PitchEstimate PitchDetector::estimate(const AudioBuffer& buffer) {
         return result;
     }
 
-    double best_correlation = -1.0;
-    std::size_t best_lag = 0;
+    std::vector<double> correlations(maximum_lag + 1, -1.0);
+    double global_maximum = -1.0;
     for (std::size_t lag = minimum_lag; lag <= maximum_lag; ++lag) {
         double correlation = 0.0;
         double left_energy = 0.0;
@@ -86,11 +86,25 @@ PitchEstimate PitchDetector::estimate(const AudioBuffer& buffer) {
 
         const double denominator = std::sqrt(left_energy * right_energy);
         if (denominator > 0.0) {
-            correlation /= denominator;
-            if (correlation > best_correlation) {
-                best_correlation = correlation;
-                best_lag = lag;
-            }
+            correlations[lag] = correlation / denominator;
+            global_maximum = std::max(global_maximum, correlations[lag]);
+        }
+    }
+
+    // Periodic signals produce peaks at the fundamental period and its
+    // integer multiples. Prefer the earliest strong local maximum so that
+    // a later harmonic-period peak does not create a sub-octave error.
+    const double peak_threshold = global_maximum * 0.85;
+    std::size_t best_lag = 0;
+    double best_correlation = -1.0;
+    for (std::size_t lag = minimum_lag + 1;
+         lag < maximum_lag; ++lag) {
+        if (correlations[lag] >= peak_threshold &&
+            correlations[lag] >= correlations[lag - 1] &&
+            correlations[lag] >= correlations[lag + 1]) {
+            best_lag = lag;
+            best_correlation = correlations[lag];
+            break;
         }
     }
 
