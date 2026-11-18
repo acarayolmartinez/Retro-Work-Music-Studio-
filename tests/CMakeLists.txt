@@ -197,3 +197,23 @@ add_test(
     NAME rms.audio.note_event
     COMMAND rms_test_note_event
 )
+
+add_executable(rms_test_musical_timeline
+    test_musical_timeline.cpp
+)
+
+target_link_libraries(rms_test_musical_timeline
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_musical_timeline PRIVATE /W4)
+else()
+    target_compile_options(rms_test_musical_timeline PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.musical_timeline
+    COMMAND rms_test_musical_timeline
+)
