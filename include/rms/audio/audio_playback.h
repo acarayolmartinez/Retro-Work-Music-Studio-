@@ -3,6 +3,7 @@
 
 #include "rms/audio/audio_buffer.h"
 #include "rms/audio/audio_output.h"
+#include "rms/audio/audio_settings.h"
 
 #include <cstddef>
 #include <string>
@@ -23,6 +24,8 @@ public:
     AudioPlayback();
 
     void load(const AudioBuffer& buffer, bool enable_output = true);
+    void load(const AudioBuffer& buffer, const AudioSettings& settings,
+              bool enable_output = true);
     void unload();
     void play();
     void pause();
