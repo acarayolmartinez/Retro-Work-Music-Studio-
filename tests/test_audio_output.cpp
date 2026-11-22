@@ -26,6 +26,9 @@ int main() {
     assert(!output.last_error().empty());
 #endif
 
+    output.seek(12);
+    assert(output.position_frame() == 0);
+
     output.close();
     assert(!output.is_open());
     assert(output.position_frame() == 0);
