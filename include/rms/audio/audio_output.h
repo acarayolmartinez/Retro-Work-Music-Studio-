@@ -2,6 +2,7 @@
 #define RMS_AUDIO_AUDIO_OUTPUT_H
 
 #include "rms/audio/audio_buffer.h"
+#include "rms/audio/audio_settings.h"
 
 #include <cstddef>
 #include <memory>
@@ -22,6 +23,7 @@ public:
     // Uses the system default output device when device_index is -1.
     // A non-negative value selects the PortAudio device index.
     bool open(const AudioBuffer& buffer, int device_index = -1);
+    bool open(const AudioBuffer& buffer, const AudioSettings& settings);
     bool start();
     void pause();
     void stop();
