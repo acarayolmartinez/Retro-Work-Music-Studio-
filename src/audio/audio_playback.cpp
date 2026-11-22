@@ -11,12 +11,14 @@ AudioPlayback::AudioPlayback()
       position_frame_(0) {
 }
 
-void AudioPlayback::load(const AudioBuffer& buffer) {
+void AudioPlayback::load(const AudioBuffer& buffer, bool enable_output) {
     output_.close();
     buffer_ = &buffer;
     position_frame_ = 0;
     state_ = PlaybackState::Stopped;
-    output_.open(buffer);
+    if (enable_output) {
+        output_.open(buffer);
+    }
 }
 
 void AudioPlayback::unload() {
