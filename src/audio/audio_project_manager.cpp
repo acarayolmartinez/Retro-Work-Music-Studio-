@@ -88,6 +88,10 @@ const std::string& AudioProjectManager::file_path() const {
     return file_path_;
 }
 
+std::size_t AudioProjectManager::frames_per_waveform_point() const {
+    return frames_per_waveform_point_;
+}
+
 AudioProject& AudioProjectManager::project() {
     return project_;
 }
