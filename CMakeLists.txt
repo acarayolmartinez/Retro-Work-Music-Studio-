@@ -31,6 +31,7 @@ add_library(rms_core
     src/audio/waveform_viewport.cpp
     src/audio/audio_playback.cpp
     src/audio/audio_output.cpp
+    src/audio/audio_device_manager.cpp
 )
 
 target_include_directories(rms_core
