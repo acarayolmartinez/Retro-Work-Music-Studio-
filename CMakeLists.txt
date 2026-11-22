@@ -34,6 +34,7 @@ add_library(rms_core
     src/audio/audio_device_manager.cpp
     src/audio/audio_settings.cpp
     src/audio/audio_settings_store.cpp
+    src/audio/audio_settings_manager.cpp
 )
 
 target_include_directories(rms_core
