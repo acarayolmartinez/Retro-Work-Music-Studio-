@@ -32,6 +32,7 @@ add_library(rms_core
     src/audio/audio_playback.cpp
     src/audio/audio_playback_controller.cpp
     src/audio/audio_project.cpp
+    src/audio/audio_project_file.cpp
     src/audio/audio_output.cpp
     src/audio/audio_device_manager.cpp
     src/audio/audio_settings.cpp
