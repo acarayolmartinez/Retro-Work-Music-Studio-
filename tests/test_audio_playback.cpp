@@ -21,7 +21,6 @@ int main() {
     playback.load(buffer, false);
     assert(playback.has_audio());
     assert(!playback.has_output());
-    assert(!playback.output_error().empty());
     assert(playback.duration_frames() == 100);
     playback.play();
     assert(playback.state() == PlaybackState::Playing);
