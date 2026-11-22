@@ -26,6 +26,7 @@ add_library(rms_core
     src/audio/note_event.cpp
     src/audio/musical_timeline.cpp
     src/audio/audio_analysis_pipeline.cpp
+    src/audio/waveform_data.cpp
 )
 
 target_include_directories(rms_core
