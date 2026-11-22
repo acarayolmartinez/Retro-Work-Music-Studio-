@@ -317,3 +317,23 @@ add_test(
     NAME rms.audio.playback
     COMMAND rms_test_audio_playback
 )
+
+add_executable(rms_test_audio_output
+    test_audio_output.cpp
+)
+
+target_link_libraries(rms_test_audio_output
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_output PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_output PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.output
+    COMMAND rms_test_audio_output
+)
