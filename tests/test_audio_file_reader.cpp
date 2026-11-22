@@ -58,6 +58,12 @@ void write_fixture(const std::string& path, std::uint16_t bits,
         append_u32(pcm, 0x80000000u); append_u32(pcm, 0);
         append_u32(pcm, 0x7fffffffu);
     }
+    if (channels == 2) {
+        if (bits == 8) pcm.push_back(128);
+        else if (bits == 16) append_u16(pcm, 0);
+        else if (bits == 24) { pcm.push_back(0); pcm.push_back(0); pcm.push_back(0); }
+        else append_u32(pcm, 0);
+    }
     append_id(body, "data"); append_u32(body, static_cast<std::uint32_t>(pcm.size()));
     body.insert(body.end(), pcm.begin(), pcm.end());
     if (pcm.size() & 1u) body.push_back(0);
