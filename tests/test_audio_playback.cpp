@@ -1,4 +1,5 @@
 #include "rms/audio/audio_playback.h"
+#include "rms/audio/audio_settings.h"
 
 #include <cassert>
 #include <cmath>
@@ -58,6 +59,26 @@ int main() {
     assert(!playback.has_audio());
     assert(playback.position_frame() == 0);
     assert(playback.state() == PlaybackState::Stopped);
+
+    rms::audio::AudioSettings settings;
+    settings.sample_rate = 200;
+    playback.load(buffer, settings, true);
+    assert(playback.has_audio());
+    assert(!playback.has_output());
+    assert(!playback.output_error().empty());
+    assert(playback.state() == PlaybackState::Stopped);
+
+    settings.sample_rate = 100;
+    settings.channel_count = 2;
+    playback.load(buffer, settings, true);
+    assert(!playback.has_output());
+    assert(!playback.output_error().empty());
+
+    settings.channel_count = 1;
+    settings.output_device_index = -2;
+    playback.load(buffer, settings, true);
+    assert(!playback.has_output());
+    assert(!playback.output_error().empty());
 
     const AudioBuffer empty_buffer(44100, 1, std::vector<float>());
     playback.load(empty_buffer, false);
