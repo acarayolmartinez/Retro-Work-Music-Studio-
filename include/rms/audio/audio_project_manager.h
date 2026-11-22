@@ -24,6 +24,7 @@ public:
     bool is_modified() const;
     bool has_file_path() const;
     const std::string& file_path() const;
+    std::size_t frames_per_waveform_point() const;
 
     AudioProject& project();
     const AudioProject& project() const;
