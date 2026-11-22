@@ -15,6 +15,7 @@ option(RMS_BUILD_TESTS "Build RMS unit tests" OFF)
 add_library(rms_core
     src/core/application.cpp
     src/audio/audio_buffer.cpp
+    src/audio/audio_file_reader.cpp
     src/audio/audio_analyzer.cpp
     src/audio/transient_detector.cpp
     src/audio/beat_interval_analyzer.cpp
