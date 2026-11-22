@@ -49,7 +49,7 @@ struct AudioOutput::Impl {
             if (current >= self->frames) {
                 self->running.store(false);
             }
-            return paContinue;
+            return current >= self->frames ? paComplete : paContinue;
         }
 
         const std::size_t available = self->frames - current;
@@ -174,6 +174,22 @@ void AudioOutput::stop() {
     }
 #endif
     impl_->position.store(0);
+}
+
+void AudioOutput::seek(std::size_t frame) {
+    if (!impl_->open.load()) {
+        return;
+    }
+    const std::size_t bounded = std::min(frame, impl_->frames);
+    impl_->position.store(bounded);
+    if (bounded >= impl_->frames) {
+        impl_->running.store(false);
+#ifdef RMS_ENABLE_PORTAUDIO
+        if (impl_->stream != 0 && Pa_IsStreamActive(impl_->stream) == 1) {
+            Pa_StopStream(impl_->stream);
+        }
+#endif
+    }
 }
 
 void AudioOutput::close() {
