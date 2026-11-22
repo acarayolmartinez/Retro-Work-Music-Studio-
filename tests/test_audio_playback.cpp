@@ -1,5 +1,6 @@
 #include "rms/audio/audio_playback.h"
 #include "rms/audio/audio_settings.h"
+#include "rms/audio/audio_settings_manager.h"
 
 #include <cassert>
 #include <cmath>
@@ -77,6 +78,31 @@ int main() {
     settings.channel_count = 1;
     settings.output_device_index = -2;
     playback.load(buffer, settings, true);
+    assert(!playback.has_output());
+    assert(!playback.output_error().empty());
+
+
+    rms::audio::AudioSettingsManager settings_manager;
+    rms::audio::AudioSettings managed_settings;
+    managed_settings.sample_rate = buffer.sample_rate();
+    managed_settings.channel_count = buffer.channel_count();
+    managed_settings.output_device_index = -1;
+    managed_settings.frames_per_buffer = 128;
+    std::string settings_error;
+    assert(settings_manager.set_settings(managed_settings, &settings_error));
+    playback.load(buffer, settings_manager, false);
+    assert(playback.has_audio());
+    assert(!playback.has_output());
+    assert(playback.duration_frames() == buffer.frame_count());
+    assert(playback.output_error().empty());
+    playback.play();
+    playback.advance(10);
+    assert(playback.position_frame() == 10);
+    playback.stop();
+
+    managed_settings.sample_rate = 200;
+    assert(settings_manager.set_settings(managed_settings, &settings_error));
+    playback.load(buffer, settings_manager, true);
     assert(!playback.has_output());
     assert(!playback.output_error().empty());
 
