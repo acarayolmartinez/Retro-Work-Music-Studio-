@@ -377,3 +377,23 @@ add_test(
     NAME rms.audio.settings
     COMMAND rms_test_audio_settings
 )
+
+add_executable(rms_test_audio_settings_store
+    test_audio_settings_store.cpp
+)
+
+target_link_libraries(rms_test_audio_settings_store
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_settings_store PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_settings_store PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.settings_store
+    COMMAND rms_test_audio_settings_store
+)
