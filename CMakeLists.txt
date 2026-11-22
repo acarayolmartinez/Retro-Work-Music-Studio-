@@ -25,6 +25,7 @@ add_library(rms_core
     src/audio/melody_tracker.cpp
     src/audio/note_event.cpp
     src/audio/musical_timeline.cpp
+    src/audio/audio_analysis_pipeline.cpp
 )
 
 target_include_directories(rms_core
