@@ -417,3 +417,23 @@ add_test(
     NAME rms.audio.settings_manager
     COMMAND rms_test_audio_settings_manager
 )
+
+add_executable(rms_test_audio_playback_controller
+    test_audio_playback_controller.cpp
+)
+
+target_link_libraries(rms_test_audio_playback_controller
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_playback_controller PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_playback_controller PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.playback_controller
+    COMMAND rms_test_audio_playback_controller
+)
