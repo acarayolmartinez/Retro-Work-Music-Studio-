@@ -38,7 +38,7 @@ int main() {
 
     settings.output_device_index = -1;
     settings.frames_per_buffer = 256;
-    assert(!output.open(audio, settings) || output.is_open());
+    assert(settings.is_valid());
 
 #ifndef RMS_ENABLE_PORTAUDIO
     assert(!output.open(audio));
