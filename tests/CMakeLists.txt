@@ -257,3 +257,23 @@ add_test(
     NAME rms.audio.analysis_pipeline
     COMMAND rms_test_audio_analysis_pipeline
 )
+
+add_executable(rms_test_waveform_data
+    test_waveform_data.cpp
+)
+
+target_link_libraries(rms_test_waveform_data
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_waveform_data PRIVATE /W4)
+else()
+    target_compile_options(rms_test_waveform_data PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.waveform_data
+    COMMAND rms_test_waveform_data
+)
