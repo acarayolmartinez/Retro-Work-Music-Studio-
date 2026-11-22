@@ -2,8 +2,10 @@
 #define RMS_AUDIO_AUDIO_PLAYBACK_H
 
 #include "rms/audio/audio_buffer.h"
+#include "rms/audio/audio_output.h"
 
 #include <cstddef>
+#include <string>
 
 namespace rms {
 namespace audio {
@@ -14,7 +16,8 @@ enum class PlaybackState {
     Paused
 };
 
-// Transport state for an audio buffer. Device output is provided by a backend.
+// Transport controller. Uses AudioOutput when a PortAudio backend is available;
+// retains deterministic frame advancement for backend-free unit tests.
 class AudioPlayback {
 public:
     AudioPlayback();
@@ -27,17 +30,19 @@ public:
     void seek(std::size_t frame);
 
     bool has_audio() const;
+    bool has_output() const;
+    std::string output_error() const;
     PlaybackState state() const;
     std::size_t position_frame() const;
     std::size_t duration_frames() const;
     double position_seconds() const;
 
-    // Advances transport position as if frames had been consumed by an output
-    // device. Stops automatically at the end of the loaded buffer.
+    // Advances position only when running without a physical output backend.
     void advance(std::size_t frames);
 
 private:
     const AudioBuffer* buffer_;
+    AudioOutput output_;
     PlaybackState state_;
     std::size_t position_frame_;
 };
