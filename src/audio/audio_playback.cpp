@@ -30,6 +30,13 @@ void AudioPlayback::load(const AudioBuffer& buffer,
     }
 }
 
+void AudioPlayback::load(
+    const AudioBuffer& buffer,
+    const AudioSettingsManager& settings_manager,
+    bool enable_output) {
+    load(buffer, settings_manager.settings(), enable_output);
+}
+
 void AudioPlayback::unload() {
     output_.close();
     buffer_ = 0;
