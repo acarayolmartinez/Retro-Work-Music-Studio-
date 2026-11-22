@@ -537,3 +537,23 @@ add_test(
     NAME rms.audio.import_config
     COMMAND rms_test_audio_import_config
 )
+
+add_executable(rms_test_audio_import_format
+    test_audio_import_format.cpp
+)
+
+target_link_libraries(rms_test_audio_import_format
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_import_format PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_import_format PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.import_format
+    COMMAND rms_test_audio_import_format
+)
