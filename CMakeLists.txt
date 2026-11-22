@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(RMS_BUILD_TESTS "Build RMS unit tests" OFF)
+option(RMS_ENABLE_PORTAUDIO "Enable real audio output through PortAudio" OFF)
 
 add_library(rms_core
     src/core/application.cpp
@@ -29,6 +30,7 @@ add_library(rms_core
     src/audio/waveform_data.cpp
     src/audio/waveform_viewport.cpp
     src/audio/audio_playback.cpp
+    src/audio/audio_output.cpp
 )
 
 target_include_directories(rms_core
@@ -37,6 +39,13 @@ target_include_directories(rms_core
 )
 
 target_compile_features(rms_core PUBLIC cxx_std_11)
+
+if(RMS_ENABLE_PORTAUDIO)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PORTAUDIO REQUIRED IMPORTED_TARGET portaudio-2.0)
+    target_compile_definitions(rms_core PRIVATE RMS_ENABLE_PORTAUDIO)
+    target_link_libraries(rms_core PUBLIC PkgConfig::PORTAUDIO)
+endif()
 
 add_executable(rms
     src/main.cpp
