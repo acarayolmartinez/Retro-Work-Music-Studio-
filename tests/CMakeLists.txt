@@ -237,3 +237,23 @@ add_test(
     NAME rms.audio.musical_timeline
     COMMAND rms_test_musical_timeline
 )
+
+add_executable(rms_test_audio_analysis_pipeline
+    test_audio_analysis_pipeline.cpp
+)
+
+target_link_libraries(rms_test_audio_analysis_pipeline
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_analysis_pipeline PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_analysis_pipeline PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.analysis_pipeline
+    COMMAND rms_test_audio_analysis_pipeline
+)
