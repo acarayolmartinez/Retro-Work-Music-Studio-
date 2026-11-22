@@ -4,6 +4,7 @@
 #include "rms/audio/audio_buffer.h"
 #include "rms/audio/audio_output.h"
 #include "rms/audio/audio_settings.h"
+#include "rms/audio/audio_settings_manager.h"
 
 #include <cstddef>
 #include <string>
@@ -25,6 +26,9 @@ public:
 
     void load(const AudioBuffer& buffer, bool enable_output = true);
     void load(const AudioBuffer& buffer, const AudioSettings& settings,
+              bool enable_output = true);
+    void load(const AudioBuffer& buffer,
+              const AudioSettingsManager& settings_manager,
               bool enable_output = true);
     void unload();
     void play();
