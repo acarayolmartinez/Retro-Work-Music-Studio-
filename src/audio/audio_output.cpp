@@ -84,7 +84,7 @@ AudioOutput::~AudioOutput() {
     close();
 }
 
-bool AudioOutput::open(const AudioBuffer& buffer) {
+bool AudioOutput::open(const AudioBuffer& buffer, int device_index) {
     close();
     if (buffer.frame_count() == 0) {
         impl_->error = "Cannot open an empty audio buffer.";
@@ -93,6 +93,7 @@ bool AudioOutput::open(const AudioBuffer& buffer) {
 
 #ifndef RMS_ENABLE_PORTAUDIO
     (void)buffer;
+    (void)device_index;
     impl_->error = "RMS was built without PortAudio support. "
                    "Enable RMS_ENABLE_PORTAUDIO in CMake.";
     return false;
@@ -111,13 +112,41 @@ bool AudioOutput::open(const AudioBuffer& buffer) {
     }
     impl_->initialized = true;
 
-    result = Pa_OpenDefaultStream(
+    const PaDeviceIndex selected_device =
+        device_index < 0 ? Pa_GetDefaultOutputDevice()
+                        : static_cast<PaDeviceIndex>(device_index);
+    if (selected_device == paNoDevice) {
+        impl_->error = "No default output device is available.";
+        close();
+        return false;
+    }
+
+    const PaDeviceInfo* device_info = Pa_GetDeviceInfo(selected_device);
+    if (device_info == 0) {
+        impl_->error = "The selected audio output device does not exist.";
+        close();
+        return false;
+    }
+    if (device_info->maxOutputChannels < static_cast<int>(impl_->channels)) {
+        impl_->error = "The selected device does not support the audio channel count.";
+        close();
+        return false;
+    }
+
+    PaStreamParameters output_parameters;
+    output_parameters.device = selected_device;
+    output_parameters.channelCount = static_cast<int>(impl_->channels);
+    output_parameters.sampleFormat = paFloat32;
+    output_parameters.suggestedLatency = device_info->defaultLowOutputLatency;
+    output_parameters.hostApiSpecificStreamInfo = 0;
+
+    result = Pa_OpenStream(
         &impl_->stream,
         0,
-        static_cast<int>(impl_->channels),
-        paFloat32,
+        &output_parameters,
         static_cast<double>(impl_->sample_rate),
         paFramesPerBufferUnspecified,
+        paNoFlag,
         &Impl::callback,
         impl_.get());
 
