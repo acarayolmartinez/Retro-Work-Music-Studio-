@@ -20,9 +20,10 @@ std::string lowercase(std::string value) {
 AudioImportFormat AudioImportFormatInfo::detect(const std::string& path) {
     const std::string::size_type slash = path.find_last_of("/\\");
     const std::string::size_type dot = path.find_last_of('.');
-    if (dot == std::string::npos ||
-        (slash != std::string::npos && dot < slash) ||
-        dot + 1 >= path.size()) {
+    const std::string::size_type filename_start =
+        slash == std::string::npos ? 0 : slash + 1;
+    if (dot == std::string::npos || dot < filename_start ||
+        dot == filename_start || dot + 1 >= path.size()) {
         return AudioImportFormat::Unknown;
     }
 
