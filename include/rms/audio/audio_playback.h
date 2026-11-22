@@ -22,7 +22,7 @@ class AudioPlayback {
 public:
     AudioPlayback();
 
-    void load(const AudioBuffer& buffer);
+    void load(const AudioBuffer& buffer, bool enable_output = true);
     void unload();
     void play();
     void pause();
