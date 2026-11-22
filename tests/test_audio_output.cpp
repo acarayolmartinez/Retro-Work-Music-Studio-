@@ -1,4 +1,5 @@
 #include "rms/audio/audio_output.h"
+#include "rms/audio/audio_settings.h"
 
 #include <cassert>
 #include <iostream>
@@ -18,8 +19,28 @@ int main() {
     assert(!output.is_open());
     assert(!output.last_error().empty());
 
-#ifndef RMS_ENABLE_PORTAUDIO
     const AudioBuffer audio(44100, 1, std::vector<float>(441, 0.1f));
+    rms::audio::AudioSettings settings;
+    settings.sample_rate = 48000;
+    assert(!output.open(audio, settings));
+    assert(!output.is_open());
+    assert(!output.last_error().empty());
+
+    settings.sample_rate = 44100;
+    settings.channel_count = 2;
+    assert(!output.open(audio, settings));
+    assert(!output.is_open());
+
+    settings.channel_count = 1;
+    settings.output_device_index = -2;
+    assert(!output.open(audio, settings));
+    assert(!output.is_open());
+
+    settings.output_device_index = -1;
+    settings.frames_per_buffer = 256;
+    assert(!output.open(audio, settings) || output.is_open());
+
+#ifndef RMS_ENABLE_PORTAUDIO
     assert(!output.open(audio));
     assert(!output.open(audio, 0));
     assert(!output.start());
