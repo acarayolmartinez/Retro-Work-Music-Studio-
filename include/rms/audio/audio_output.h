@@ -19,7 +19,9 @@ public:
     AudioOutput(const AudioOutput&) = delete;
     AudioOutput& operator=(const AudioOutput&) = delete;
 
-    bool open(const AudioBuffer& buffer);
+    // Uses the system default output device when device_index is -1.
+    // A non-negative value selects the PortAudio device index.
+    bool open(const AudioBuffer& buffer, int device_index = -1);
     bool start();
     void pause();
     void stop();
