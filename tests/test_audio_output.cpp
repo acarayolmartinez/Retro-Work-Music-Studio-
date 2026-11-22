@@ -21,6 +21,7 @@ int main() {
 #ifndef RMS_ENABLE_PORTAUDIO
     const AudioBuffer audio(44100, 1, std::vector<float>(441, 0.1f));
     assert(!output.open(audio));
+    assert(!output.open(audio, 0));
     assert(!output.start());
     assert(!output.is_open());
     assert(!output.last_error().empty());
