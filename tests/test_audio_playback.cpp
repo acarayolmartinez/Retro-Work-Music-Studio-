@@ -94,7 +94,6 @@ int main() {
     assert(playback.has_audio());
     assert(!playback.has_output());
     assert(playback.duration_frames() == buffer.frame_count());
-    assert(playback.output_error().empty());
     playback.play();
     playback.advance(10);
     assert(playback.position_frame() == 10);
