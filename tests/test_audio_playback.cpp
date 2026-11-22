@@ -18,7 +18,7 @@ int main() {
     assert(playback.position_seconds() == 0.0);
 
     const AudioBuffer buffer(100, 1, std::vector<float>(100, 0.25f));
-    playback.load(buffer);
+    playback.load(buffer, false);
     assert(playback.has_audio());
     assert(!playback.has_output());
     assert(!playback.output_error().empty());
@@ -61,7 +61,7 @@ int main() {
     assert(playback.state() == PlaybackState::Stopped);
 
     const AudioBuffer empty_buffer(44100, 1, std::vector<float>());
-    playback.load(empty_buffer);
+    playback.load(empty_buffer, false);
     playback.play();
     assert(playback.state() == PlaybackState::Stopped);
     assert(playback.position_frame() == 0);
