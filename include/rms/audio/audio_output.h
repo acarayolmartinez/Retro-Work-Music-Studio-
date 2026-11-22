@@ -23,6 +23,7 @@ public:
     bool start();
     void pause();
     void stop();
+    void seek(std::size_t frame);
     void close();
 
     bool is_open() const;
