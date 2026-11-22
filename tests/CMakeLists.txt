@@ -337,3 +337,23 @@ add_test(
     NAME rms.audio.output
     COMMAND rms_test_audio_output
 )
+
+add_executable(rms_test_audio_device_manager
+    test_audio_device_manager.cpp
+)
+
+target_link_libraries(rms_test_audio_device_manager
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_device_manager PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_device_manager PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.device_manager
+    COMMAND rms_test_audio_device_manager
+)
