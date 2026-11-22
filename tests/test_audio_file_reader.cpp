@@ -10,10 +10,6 @@
 
 namespace {
 
-void write_u16(std::ofstream& out, std::uint16_t value) {
-    out.put(static_cast<char>(value & 0xff));
-    out.put(static_cast<char>((value >> 8) & 0xff));
-}
 void write_u32(std::ofstream& out, std::uint32_t value) {
     out.put(static_cast<char>(value & 0xff));
     out.put(static_cast<char>((value >> 8) & 0xff));
@@ -46,7 +42,20 @@ void write_fixture(const std::string& path, std::uint16_t bits,
     append_u16(body, static_cast<std::uint16_t>(channels * (bits / 8)));
     append_u16(body, bits);
     std::vector<unsigned char> pcm;
-    if (bits == 8) {
+    if (channels == 2) {
+        // One complete stereo frame: left channel at negative full scale,
+        // right channel at positive full scale.
+        if (bits == 8) {
+            pcm.push_back(0); pcm.push_back(255);
+        } else if (bits == 16) {
+            append_u16(pcm, 0x8000); append_u16(pcm, 0x7fff);
+        } else if (bits == 24) {
+            pcm.push_back(0); pcm.push_back(0); pcm.push_back(0x80);
+            pcm.push_back(0xff); pcm.push_back(0xff); pcm.push_back(0x7f);
+        } else {
+            append_u32(pcm, 0x80000000u); append_u32(pcm, 0x7fffffffu);
+        }
+    } else if (bits == 8) {
         pcm.push_back(0); pcm.push_back(128); pcm.push_back(255);
     } else if (bits == 16) {
         append_u16(pcm, 0x8000); append_u16(pcm, 0); append_u16(pcm, 0x7fff);
@@ -57,12 +66,6 @@ void write_fixture(const std::string& path, std::uint16_t bits,
     } else {
         append_u32(pcm, 0x80000000u); append_u32(pcm, 0);
         append_u32(pcm, 0x7fffffffu);
-    }
-    if (channels == 2) {
-        if (bits == 8) pcm.push_back(128);
-        else if (bits == 16) append_u16(pcm, 0);
-        else if (bits == 24) { pcm.push_back(0); pcm.push_back(0); pcm.push_back(0); }
-        else append_u32(pcm, 0);
     }
     append_id(body, "data"); append_u32(body, static_cast<std::uint32_t>(pcm.size()));
     body.insert(body.end(), pcm.begin(), pcm.end());
