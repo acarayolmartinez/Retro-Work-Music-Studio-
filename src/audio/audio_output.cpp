@@ -1,4 +1,5 @@
 #include "rms/audio/audio_output.h"
+#include "rms/audio/audio_settings.h"
 
 #include <algorithm>
 #include <atomic>
@@ -85,22 +86,43 @@ AudioOutput::~AudioOutput() {
 }
 
 bool AudioOutput::open(const AudioBuffer& buffer, int device_index) {
+    AudioSettings settings;
+    settings.output_device_index = device_index;
+    settings.sample_rate = buffer.sample_rate();
+    settings.channel_count = buffer.channel_count();
+    return open(buffer, settings);
+}
+
+bool AudioOutput::open(const AudioBuffer& buffer,
+                       const AudioSettings& settings) {
     close();
     if (buffer.frame_count() == 0) {
         impl_->error = "Cannot open an empty audio buffer.";
         return false;
     }
+    if (!settings.is_valid()) {
+        impl_->error = settings.validation_error();
+        return false;
+    }
+    if (settings.sample_rate != buffer.sample_rate()) {
+        impl_->error = "Audio settings sample rate must match the audio buffer.";
+        return false;
+    }
+    if (settings.channel_count != buffer.channel_count()) {
+        impl_->error = "Audio settings channel count must match the audio buffer.";
+        return false;
+    }
 
 #ifndef RMS_ENABLE_PORTAUDIO
     (void)buffer;
-    (void)device_index;
+    (void)settings;
     impl_->error = "RMS was built without PortAudio support. "
                    "Enable RMS_ENABLE_PORTAUDIO in CMake.";
     return false;
 #else
     impl_->samples = buffer.samples();
-    impl_->sample_rate = buffer.sample_rate();
-    impl_->channels = buffer.channel_count();
+    impl_->sample_rate = settings.sample_rate;
+    impl_->channels = settings.channel_count;
     impl_->frames = buffer.frame_count();
     impl_->position.store(0);
 
@@ -113,8 +135,9 @@ bool AudioOutput::open(const AudioBuffer& buffer, int device_index) {
     impl_->initialized = true;
 
     const PaDeviceIndex selected_device =
-        device_index < 0 ? Pa_GetDefaultOutputDevice()
-                        : static_cast<PaDeviceIndex>(device_index);
+        settings.output_device_index < 0
+            ? Pa_GetDefaultOutputDevice()
+            : static_cast<PaDeviceIndex>(settings.output_device_index);
     if (selected_device == paNoDevice) {
         impl_->error = "No default output device is available.";
         close();
@@ -145,7 +168,9 @@ bool AudioOutput::open(const AudioBuffer& buffer, int device_index) {
         0,
         &output_parameters,
         static_cast<double>(impl_->sample_rate),
-        paFramesPerBufferUnspecified,
+        settings.frames_per_buffer == 0
+            ? paFramesPerBufferUnspecified
+            : settings.frames_per_buffer,
         paNoFlag,
         &Impl::callback,
         impl_.get());
