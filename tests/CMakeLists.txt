@@ -38,6 +38,26 @@ add_test(
     COMMAND rms_test_audio_buffer
 )
 
+add_executable(rms_test_audio_file_reader
+    test_audio_file_reader.cpp
+)
+
+target_link_libraries(rms_test_audio_file_reader
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_file_reader PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_file_reader PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.file_reader
+    COMMAND rms_test_audio_file_reader
+)
+
 add_executable(rms_test_audio_analyzer
     test_audio_analyzer.cpp
 )
