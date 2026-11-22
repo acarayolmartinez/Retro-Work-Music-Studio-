@@ -43,7 +43,7 @@ target_compile_features(rms_core PUBLIC cxx_std_11)
 if(RMS_ENABLE_PORTAUDIO)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(PORTAUDIO REQUIRED IMPORTED_TARGET portaudio-2.0)
-    target_compile_definitions(rms_core PRIVATE RMS_ENABLE_PORTAUDIO)
+    target_compile_definitions(rms_core PUBLIC RMS_ENABLE_PORTAUDIO)
     target_link_libraries(rms_core PUBLIC PkgConfig::PORTAUDIO)
 endif()
 
