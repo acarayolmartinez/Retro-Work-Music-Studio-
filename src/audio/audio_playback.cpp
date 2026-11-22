@@ -12,12 +12,21 @@ AudioPlayback::AudioPlayback()
 }
 
 void AudioPlayback::load(const AudioBuffer& buffer, bool enable_output) {
+    AudioSettings settings;
+    settings.sample_rate = buffer.sample_rate();
+    settings.channel_count = buffer.channel_count();
+    load(buffer, settings, enable_output);
+}
+
+void AudioPlayback::load(const AudioBuffer& buffer,
+                         const AudioSettings& settings,
+                         bool enable_output) {
     output_.close();
     buffer_ = &buffer;
     position_frame_ = 0;
     state_ = PlaybackState::Stopped;
     if (enable_output) {
-        output_.open(buffer);
+        output_.open(buffer, settings);
     }
 }
 
