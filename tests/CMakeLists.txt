@@ -437,3 +437,23 @@ add_test(
     NAME rms.audio.playback_controller
     COMMAND rms_test_audio_playback_controller
 )
+
+add_executable(rms_test_audio_project
+    test_audio_project.cpp
+)
+
+target_link_libraries(rms_test_audio_project
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_audio_project PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_project PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.project
+    COMMAND rms_test_audio_project
+)
