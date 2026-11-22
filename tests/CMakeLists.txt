@@ -277,3 +277,23 @@ add_test(
     NAME rms.audio.waveform_data
     COMMAND rms_test_waveform_data
 )
+
+add_executable(rms_test_waveform_viewport
+    test_waveform_viewport.cpp
+)
+
+target_link_libraries(rms_test_waveform_viewport
+    PRIVATE
+        rms_core
+)
+
+if(MSVC)
+    target_compile_options(rms_test_waveform_viewport PRIVATE /W4)
+else()
+    target_compile_options(rms_test_waveform_viewport PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_test(
+    NAME rms.audio.waveform_viewport
+    COMMAND rms_test_waveform_viewport
+)
