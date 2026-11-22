@@ -12,12 +12,15 @@ AudioPlayback::AudioPlayback()
 }
 
 void AudioPlayback::load(const AudioBuffer& buffer) {
+    output_.close();
     buffer_ = &buffer;
     position_frame_ = 0;
     state_ = PlaybackState::Stopped;
+    output_.open(buffer);
 }
 
 void AudioPlayback::unload() {
+    output_.close();
     buffer_ = 0;
     position_frame_ = 0;
     state_ = PlaybackState::Stopped;
@@ -30,21 +33,30 @@ void AudioPlayback::play() {
         return;
     }
 
-    if (position_frame_ >= buffer_->frame_count()) {
-        position_frame_ = 0;
+    if (position_frame() >= buffer_->frame_count()) {
+        seek(0);
+    }
+    if (output_.is_open()) {
+        if (!output_.start()) {
+            state_ = PlaybackState::Stopped;
+            return;
+        }
     }
     state_ = PlaybackState::Playing;
 }
 
 void AudioPlayback::pause() {
     if (state_ == PlaybackState::Playing) {
+        output_.pause();
+        position_frame_ = position_frame();
         state_ = PlaybackState::Paused;
     }
 }
 
 void AudioPlayback::stop() {
-    state_ = PlaybackState::Stopped;
+    output_.stop();
     position_frame_ = 0;
+    state_ = PlaybackState::Stopped;
 }
 
 void AudioPlayback::seek(std::size_t frame) {
@@ -54,8 +66,10 @@ void AudioPlayback::seek(std::size_t frame) {
         return;
     }
 
-    position_frame_ = std::min(frame, buffer_->frame_count());
-    if (position_frame_ == buffer_->frame_count()) {
+    const std::size_t bounded = std::min(frame, buffer_->frame_count());
+    output_.seek(bounded);
+    position_frame_ = bounded;
+    if (bounded == buffer_->frame_count()) {
         state_ = PlaybackState::Stopped;
     }
 }
@@ -64,12 +78,25 @@ bool AudioPlayback::has_audio() const {
     return buffer_ != 0;
 }
 
+bool AudioPlayback::has_output() const {
+    return output_.is_open();
+}
+
+std::string AudioPlayback::output_error() const {
+    return output_.last_error();
+}
+
 PlaybackState AudioPlayback::state() const {
+    if (state_ == PlaybackState::Playing && output_.is_open() &&
+        !output_.is_running() &&
+        output_.position_frame() >= duration_frames()) {
+        return PlaybackState::Stopped;
+    }
     return state_;
 }
 
 std::size_t AudioPlayback::position_frame() const {
-    return position_frame_;
+    return output_.is_open() ? output_.position_frame() : position_frame_;
 }
 
 std::size_t AudioPlayback::duration_frames() const {
@@ -80,12 +107,12 @@ double AudioPlayback::position_seconds() const {
     if (buffer_ == 0 || buffer_->sample_rate() == 0) {
         return 0.0;
     }
-    return static_cast<double>(position_frame_) /
+    return static_cast<double>(position_frame()) /
            static_cast<double>(buffer_->sample_rate());
 }
 
 void AudioPlayback::advance(std::size_t frames) {
-    if (state_ != PlaybackState::Playing || buffer_ == 0) {
+    if (state_ != PlaybackState::Playing || output_.is_open() || buffer_ == 0) {
         return;
     }
 
