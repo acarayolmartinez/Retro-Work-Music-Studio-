@@ -13,11 +13,32 @@ AudioImportManager::AudioImportManager(AudioProjectManager& project_manager)
 
 bool AudioImportManager::import_wav(const std::string& path,
                                     std::string* error) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return import_wav(path, config, error);
+}
+
+bool AudioImportManager::import_wav(const std::string& path,
+                                    const AudioImportConfig& config,
+                                    std::string* error) {
+    if (!config.is_valid()) {
+        if (error != 0) {
+            *error = config.validation_error();
+        }
+        return false;
+    }
+    if (!config.allow_wav) {
+        if (error != 0) {
+            *error = "WAV import is disabled by the import configuration.";
+        }
+        return false;
+    }
+
     try {
-        // Decode first: a read failure must not modify the current project.
         const AudioBuffer buffer = AudioFileReader::read_wav(path);
         project_manager_.project().load_audio(
-            buffer, project_manager_.frames_per_waveform_point());
+            buffer, config.frames_per_waveform_point);
         project_manager_.mark_modified();
         if (error != 0) {
             error->clear();
