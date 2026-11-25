@@ -91,6 +91,7 @@ int main() {
     custom_config.frames_per_waveform_point = 2;
     assert(importer.import_wav(wav_path, custom_config, &error));
     assert(projects.project().waveform().size() == 1);
+    assert(importer.history().size() == 2);
 
     // Disabled WAV support and invalid settings are rejected transactionally.
     const std::size_t configured_frames = projects.project().audio()->frame_count();
@@ -107,7 +108,10 @@ int main() {
 
     // Unknown extensions remain disabled by default.
     const std::size_t old_frames = projects.project().audio()->frame_count();
+    const std::size_t history_before_failure = importer.history().size();
     assert(!importer.import_file("song.mp3", &error));
+    assert(importer.history().size() == history_before_failure + 1);
+    assert(!importer.history().latest()->success);
     assert(error.find("extension") != std::string::npos);
     assert(projects.project().audio()->frame_count() == old_frames);
     assert(projects.is_modified());
