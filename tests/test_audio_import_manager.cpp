@@ -102,6 +102,13 @@ int main() {
     assert(!error.empty());
     assert(projects.project().audio()->frame_count() == old_frames);
     custom_config.allow_wave = true;
+
+    custom_config.allow_unknown_extensions = true;
+    assert(!importer.import_file("song.mp3", custom_config, &error));
+    assert(error.find("not implemented") != std::string::npos);
+    assert(projects.project().audio()->frame_count() == old_frames);
+    custom_config.allow_unknown_extensions = false;
+
     assert(importer.import_file(wave_path, &error));
     assert(error.empty());
     assert(projects.project().audio()->frame_count() == 2);
