@@ -95,6 +95,12 @@ int main() {
     assert(importer.history().size() == 4);
     assert(importer.history().latest() != 0);
     assert(importer.history().latest()->success);
+    assert(importer.successful_import_count() == 3);
+    assert(importer.failed_import_count() == 1);
+    assert(importer.recent_imports(2).size() == 2);
+    assert(importer.recent_imports(1)[0].success);
+    assert(importer.find_imports("FIXTURE.WAV").size() == 3);
+    assert(importer.find_imports("not-present").empty());
 
     // Disabled WAV support and invalid settings are rejected transactionally.
     const std::size_t configured_frames = projects.project().audio()->frame_count();
@@ -177,6 +183,24 @@ int main() {
     assert(import_with_store_error.success);
     assert(projects.project().has_audio());
     assert(!importer.history_store_error().empty());
+
+    // Clearing persists the empty history when a working store is configured.
+    assert(importer.configure_history_store(history_path, true, &error));
+    assert(importer.clear_history(&error));
+    assert(error.empty());
+    assert(importer.history().empty());
+    rms::audio::AudioProjectManager cleared_projects(1);
+    rms::audio::AudioImportManager cleared_importer(cleared_projects);
+    assert(cleared_importer.configure_history_store(history_path, true, &error));
+    assert(cleared_importer.history().empty());
+
+    // Failed persistence restores the in-memory entries.
+    importer.import_file_with_report("clear-rollback.mp3");
+    const std::size_t before_failed_clear = importer.history().size();
+    assert(importer.configure_history_store(".", false, &error));
+    assert(!importer.clear_history(&error));
+    assert(importer.history().size() == before_failed_clear);
+    assert(!error.empty());
 
     std::remove(history_path.c_str());
     std::remove(wav_path.c_str());
