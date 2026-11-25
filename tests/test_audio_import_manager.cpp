@@ -64,6 +64,28 @@ int main() {
     assert(projects.project().state() == rms::audio::AudioProjectState::AudioLoaded);
     assert(projects.is_modified());
 
+    // Structured report includes file identity and decoded audio properties.
+    const rms::audio::AudioImportReport success_report =
+        importer.import_file_with_report(wav_path);
+    assert(success_report.success);
+    assert(success_report.file_path == wav_path);
+    assert(success_report.file_name == wav_path);
+    assert(success_report.file_extension == ".wav");
+    assert(success_report.detected_format == "WAV");
+    assert(success_report.error_message.empty());
+    assert(success_report.sample_rate == 44100);
+    assert(success_report.channel_count == 1);
+    assert(success_report.duration_seconds > 0.0);
+
+    const rms::audio::AudioImportReport unsupported_report =
+        importer.import_file_with_report("folder/unknown.mp3");
+    assert(!unsupported_report.success);
+    assert(unsupported_report.file_name == "unknown.mp3");
+    assert(unsupported_report.file_extension == ".mp3");
+    assert(unsupported_report.detected_format == "Unknown");
+    assert(!unsupported_report.error_message.empty());
+    assert(unsupported_report.sample_rate == 0);
+
     // Explicit configuration controls waveform resolution.
     rms::audio::AudioImportConfig custom_config;
     custom_config.frames_per_waveform_point = 2;
