@@ -8,6 +8,8 @@
 namespace rms {
 namespace audio {
 
+class AudioImportManager;
+
 // Owns the active audio preferences and coordinates persistence.
 class AudioSettingsManager {
 public:
@@ -17,6 +19,9 @@ public:
     bool set_settings(const AudioSettings& settings,
                       std::string* error = 0);
     void reset_defaults();
+
+    bool configure_import_history(AudioImportManager& import_manager,
+                                  std::string* error = 0) const;
 
     bool save(const std::string& path, std::string* error = 0) const;
     bool load(const std::string& path, std::string* error = 0);
