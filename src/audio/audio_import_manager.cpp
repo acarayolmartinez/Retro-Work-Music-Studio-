@@ -30,7 +30,8 @@ AudioImportManager::AudioImportManager(AudioProjectManager& project_manager)
     : project_manager_(project_manager),
       history_(),
       history_store_path_(),
-      history_store_error_() {
+      history_store_error_(),
+      history_auto_save_(true) {
 }
 
 const AudioImportHistory& AudioImportManager::history() const {
