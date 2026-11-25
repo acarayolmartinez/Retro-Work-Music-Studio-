@@ -13,6 +13,11 @@ class AudioImportManager {
 public:
     explicit AudioImportManager(AudioProjectManager& project_manager);
 
+    bool import_file(const std::string& path, std::string* error = 0);
+    bool import_file(const std::string& path,
+                     const AudioImportConfig& config,
+                     std::string* error = 0);
+
     bool import_wav(const std::string& path, std::string* error = 0);
     bool import_wav(const std::string& path,
                     const AudioImportConfig& config,
