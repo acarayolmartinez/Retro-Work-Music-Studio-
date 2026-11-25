@@ -40,6 +40,12 @@ void AudioSettingsManager::reset_defaults() {
 bool AudioSettingsManager::configure_import_history(
     AudioImportManager& import_manager, std::string* error) const {
     const std::string& path = settings_.import_history_path;
+    if (import_manager.history_store_path() == path) {
+        import_manager.set_history_auto_save(settings_.import_history_auto_save);
+        set_error(error, std::string());
+        return true;
+    }
+
     std::ifstream existing(path.c_str(), std::ios::in | std::ios::binary);
     const bool file_exists = existing.good();
     existing.close();
