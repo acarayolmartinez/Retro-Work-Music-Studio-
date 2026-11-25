@@ -18,6 +18,7 @@ public:
     static AudioImportFormat detect(const std::string& path);
     static bool is_supported(const std::string& path);
     static std::string extension(AudioImportFormat format);
+    static std::string extension_from_path(const std::string& path);
     static std::vector<std::string> supported_extensions();
 };
 
