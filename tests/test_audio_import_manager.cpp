@@ -83,10 +83,10 @@ int main() {
     assert(!error.empty());
     assert(projects.project().audio()->frame_count() == configured_frames);
 
-    // Format detection gates imports before reading file contents.
+    // Per-extension policy rejects .wave when disabled.\n    custom_config.frames_per_waveform_point = 2;\n    custom_config.allow_wav = true;\n    custom_config.allow_wave = false;\n    assert(!importer.import_file(wave_path, custom_config, &error));\n    assert(!error.empty());\n    assert(projects.project().audio()->frame_count() == old_frames);\n    custom_config.allow_wave = true;\n\n    // Unknown extensions remain disabled by default.
     const std::size_t old_frames = projects.project().audio()->frame_count();
     assert(!importer.import_file("song.mp3", &error));
-    assert(error.find("Unsupported audio file format") != std::string::npos);
+    assert(error.find("extension") != std::string::npos);
     assert(projects.project().audio()->frame_count() == old_frames);
     assert(projects.is_modified());
 
