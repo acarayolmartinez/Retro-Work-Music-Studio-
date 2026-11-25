@@ -1,6 +1,7 @@
 #include "rms/audio/audio_import_manager.h"
 #include "rms/audio/audio_project_manager.h"
 #include "rms/audio/audio_import_config.h"
+#include "rms/audio/audio_import_format.h"
 
 #include <cassert>
 #include <cstdio>
@@ -82,12 +83,26 @@ int main() {
     assert(!error.empty());
     assert(projects.project().audio()->frame_count() == configured_frames);
 
-    // A failed import must preserve the existing project and dirty state.
+    // Format detection gates imports before reading file contents.
     const std::size_t old_frames = projects.project().audio()->frame_count();
-    assert(!importer.import_wav("rms_missing_import.wav", &error));
+    assert(!importer.import_file("song.mp3", &error));
+    assert(error.find("Unsupported audio file format") != std::string::npos);
+    assert(projects.project().audio()->frame_count() == old_frames);
+    assert(projects.is_modified());
+
+    // A WAV file with a .wave extension is accepted by generic import.
+    const std::string wave_path = "rms_import_fixture.wave";
+    fixture(wave_path);
+    assert(importer.import_file(wave_path, &error));
+    assert(error.empty());
+    assert(projects.project().audio()->frame_count() == 2);
+
+    // Missing supported files still fail without replacing the current project.
+    assert(!importer.import_file("rms_missing_import.wav", &error));
     assert(!error.empty());
     assert(projects.project().audio()->frame_count() == old_frames);
     assert(projects.is_modified());
+    std::remove(wave_path.c_str());
 
     std::remove(wav_path.c_str());
     std::cout << "AudioImportManager tests passed.\n";
