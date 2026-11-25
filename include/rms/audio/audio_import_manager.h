@@ -48,7 +48,8 @@ private:
     AudioProjectManager& project_manager_;
     AudioImportHistory history_;
     std::string history_store_path_;
-    std::string history_store_error_;\n    bool history_auto_save_;
+    std::string history_store_error_;
+    bool history_auto_save_;
 };
 
 } // namespace audio
