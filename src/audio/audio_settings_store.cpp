@@ -16,9 +16,7 @@ bool parse_integer(const std::string& value, long long& result) {
 }
 
 void set_error(std::string* error, const std::string& message) {
-    if (error != 0) {
-        *error = message;
-    }
+    if (error != 0) *error = message;
 }
 
 } // namespace
@@ -40,7 +38,10 @@ bool AudioSettingsStore::save(const std::string& path,
     file << "output_device_index=" << settings.output_device_index << '\n'
          << "sample_rate=" << settings.sample_rate << '\n'
          << "channel_count=" << settings.channel_count << '\n'
-         << "frames_per_buffer=" << settings.frames_per_buffer << '\n';
+         << "frames_per_buffer=" << settings.frames_per_buffer << '\n'
+         << "import_history_path=" << settings.import_history_path << '\n'
+         << "import_history_auto_save="
+         << (settings.import_history_auto_save ? 1 : 0) << '\n';
     if (!file.good()) {
         set_error(error, "Failed while writing audio settings file.");
         return false;
@@ -63,12 +64,12 @@ bool AudioSettingsStore::load(const std::string& path,
     bool seen_rate = false;
     bool seen_channels = false;
     bool seen_frames = false;
+    bool seen_history_path = false;
+    bool seen_history_auto_save = false;
     std::string line;
 
     while (std::getline(file, line)) {
-        if (line.empty()) {
-            continue;
-        }
+        if (line.empty()) continue;
         const std::string::size_type separator = line.find('=');
         if (separator == std::string::npos) {
             set_error(error, "Malformed audio settings line.");
@@ -77,6 +78,26 @@ bool AudioSettingsStore::load(const std::string& path,
 
         const std::string key = line.substr(0, separator);
         const std::string value = line.substr(separator + 1);
+
+        if (key == "import_history_path" && !seen_history_path) {
+            if (value.empty()) {
+                set_error(error, "Import history path must not be empty.");
+                return false;
+            }
+            parsed.import_history_path = value;
+            seen_history_path = true;
+            continue;
+        }
+        if (key == "import_history_auto_save" && !seen_history_auto_save) {
+            if (value != "0" && value != "1") {
+                set_error(error, "Invalid import history auto-save setting.");
+                return false;
+            }
+            parsed.import_history_auto_save = value == "1";
+            seen_history_auto_save = true;
+            continue;
+        }
+
         long long number = 0;
         if (!parse_integer(value, number)) {
             set_error(error, "Invalid integer in audio settings file.");
