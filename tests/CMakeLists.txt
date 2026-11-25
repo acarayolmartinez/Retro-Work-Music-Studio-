@@ -577,3 +577,14 @@ add_test(
     NAME rms.audio.import_report
     COMMAND rms_test_audio_import_report
 )
+
+add_executable(rms_test_audio_import_history
+    test_audio_import_history.cpp
+)
+target_link_libraries(rms_test_audio_import_history PRIVATE rms_core)
+if(MSVC)
+    target_compile_options(rms_test_audio_import_history PRIVATE /W4)
+else()
+    target_compile_options(rms_test_audio_import_history PRIVATE -Wall -Wextra -pedantic)
+endif()
+add_test(NAME rms.audio.import_history COMMAND rms_test_audio_import_history)
