@@ -105,7 +105,15 @@ const std::string& AudioImportManager::history_store_error() const {
     return history_store_error_;
 }
 
-void AudioImportManager::set_history_auto_save(bool enabled) {\n    history_auto_save_ = enabled;\n}\n\nbool AudioImportManager::history_auto_save() const {\n    return history_auto_save_;\n}\n\nvoid AudioImportManager::record_import(const AudioImportReport& report) {
+void AudioImportManager::set_history_auto_save(bool enabled) {
+    history_auto_save_ = enabled;
+}
+
+bool AudioImportManager::history_auto_save() const {
+    return history_auto_save_;
+}
+
+void AudioImportManager::record_import(const AudioImportReport& report) {
     history_.add(report);
     if (history_auto_save_ && !history_store_path_.empty()) {
         // Persistence failures are reported separately and never change the
