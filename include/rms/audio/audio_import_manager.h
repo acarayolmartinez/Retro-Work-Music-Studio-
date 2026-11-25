@@ -17,6 +17,15 @@ public:
 
     const AudioImportHistory& history() const;
 
+    // Enables automatic persistence. Existing history is loaded when requested.
+    bool configure_history_store(const std::string& path,
+                                 bool load_existing = true,
+                                 std::string* error = 0);
+    bool save_history(std::string* error = 0);
+    bool load_history(std::string* error = 0);
+    const std::string& history_store_path() const;
+    const std::string& history_store_error() const;
+
     AudioImportReport import_file_with_report(const std::string& path);
     AudioImportReport import_file_with_report(
         const std::string& path, const AudioImportConfig& config);
@@ -32,8 +41,12 @@ public:
                     std::string* error = 0);
 
 private:
+    void record_import(const AudioImportReport& report);
+
     AudioProjectManager& project_manager_;
     AudioImportHistory history_;
+    std::string history_store_path_;
+    std::string history_store_error_;
 };
 
 } // namespace audio
