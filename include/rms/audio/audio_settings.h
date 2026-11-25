@@ -8,13 +8,14 @@
 namespace rms {
 namespace audio {
 
-// Runtime audio preferences. A sample rate/channel count must match the
-// AudioBuffer until RMS provides an explicit resampling/channel-conversion stage.
+// Runtime audio and import-history preferences.
 struct AudioSettings {
     int output_device_index;
     std::uint32_t sample_rate;
     std::uint16_t channel_count;
     unsigned long frames_per_buffer;
+    std::string import_history_path;
+    bool import_history_auto_save;
 
     AudioSettings();
 
