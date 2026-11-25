@@ -83,7 +83,7 @@ int main() {
     assert(!error.empty());
     assert(projects.project().audio()->frame_count() == configured_frames);
 
-    // Per-extension policy rejects .wave when disabled.\n    custom_config.frames_per_waveform_point = 2;\n    custom_config.allow_wav = true;\n    custom_config.allow_wave = false;\n    assert(!importer.import_file(wave_path, custom_config, &error));\n    assert(!error.empty());\n    assert(projects.project().audio()->frame_count() == old_frames);\n    custom_config.allow_wave = true;\n\n    // Unknown extensions remain disabled by default.
+    // Unknown extensions remain disabled by default.
     const std::size_t old_frames = projects.project().audio()->frame_count();
     assert(!importer.import_file("song.mp3", &error));
     assert(error.find("extension") != std::string::npos);
@@ -93,6 +93,15 @@ int main() {
     // A WAV file with a .wave extension is accepted by generic import.
     const std::string wave_path = "rms_import_fixture.wave";
     fixture(wave_path);
+
+    // Per-extension policy rejects .wave when disabled.
+    custom_config.frames_per_waveform_point = 2;
+    custom_config.allow_wav = true;
+    custom_config.allow_wave = false;
+    assert(!importer.import_file(wave_path, custom_config, &error));
+    assert(!error.empty());
+    assert(projects.project().audio()->frame_count() == old_frames);
+    custom_config.allow_wave = true;
     assert(importer.import_file(wave_path, &error));
     assert(error.empty());
     assert(projects.project().audio()->frame_count() == 2);
