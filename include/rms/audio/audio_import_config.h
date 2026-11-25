@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 namespace rms {
 namespace audio {
@@ -11,11 +12,15 @@ namespace audio {
 struct AudioImportConfig {
     std::size_t frames_per_waveform_point;
     bool allow_wav;
+    bool allow_wave;
+    bool allow_unknown_extensions;
 
     AudioImportConfig();
 
     bool is_valid() const;
     std::string validation_error() const;
+    bool allows_path(const std::string& path) const;
+    std::vector<std::string> allowed_extensions() const;
 };
 
 } // namespace audio
