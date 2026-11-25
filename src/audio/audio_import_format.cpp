@@ -34,6 +34,17 @@ AudioImportFormat AudioImportFormatInfo::detect(const std::string& path) {
     return AudioImportFormat::Unknown;
 }
 
+std::string AudioImportFormatInfo::extension_from_path(const std::string& path) {
+    const std::string::size_type slash = path.find_last_of("/\\\\");
+    const std::string::size_type dot = path.find_last_of('.');
+    const std::string::size_type filename_start =
+        slash == std::string::npos ? 0 : slash + 1;
+    if (dot == std::string::npos || dot <= filename_start || dot + 1 >= path.size()) {
+        return std::string();
+    }
+    return lowercase(path.substr(dot));
+}
+
 bool AudioImportFormatInfo::is_supported(const std::string& path) {
     return detect(path) != AudioImportFormat::Unknown;
 }
