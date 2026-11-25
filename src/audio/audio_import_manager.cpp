@@ -38,6 +38,38 @@ const AudioImportHistory& AudioImportManager::history() const {
     return history_;
 }
 
+std::size_t AudioImportManager::successful_import_count() const {
+    return history_.successful_count();
+}
+
+std::size_t AudioImportManager::failed_import_count() const {
+    return history_.failed_count();
+}
+
+std::vector<AudioImportReport> AudioImportManager::recent_imports(
+    std::size_t limit) const {
+    return history_.recent(limit);
+}
+
+std::vector<AudioImportReport> AudioImportManager::find_imports(
+    const std::string& file_name_query) const {
+    return history_.find_by_file_name(file_name_query);
+}
+
+bool AudioImportManager::clear_history(std::string* error) {
+    AudioImportHistory previous = history_;
+    history_.clear();
+    if (!history_store_path_.empty() &&
+        !AudioImportHistoryStore::save(history_, history_store_path_, error)) {
+        history_ = previous;
+        if (error != 0) history_store_error_ = *error;
+        return false;
+    }
+    history_store_error_.clear();
+    if (error != 0) error->clear();
+    return true;
+}
+
 bool AudioImportManager::configure_history_store(const std::string& path,
                                                   bool load_existing,
                                                   std::string* error) {
