@@ -2,6 +2,7 @@
 #define RMS_AUDIO_AUDIO_IMPORT_REPORT_H
 
 #include <cstdint>
+#include <ctime>
 #include <string>
 
 namespace rms {
@@ -13,6 +14,7 @@ struct AudioImportReport {
     std::string file_name;
     std::string file_extension;
     std::string detected_format;
+    std::time_t timestamp;
     bool success;
     std::string error_message;
     double duration_seconds;
