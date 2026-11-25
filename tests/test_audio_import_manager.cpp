@@ -91,7 +91,10 @@ int main() {
     custom_config.frames_per_waveform_point = 2;
     assert(importer.import_wav(wav_path, custom_config, &error));
     assert(projects.project().waveform().size() == 1);
-    assert(importer.history().size() == 2);
+    // Three earlier attempts plus this successful configured import.
+    assert(importer.history().size() == 4);
+    assert(importer.history().latest() != 0);
+    assert(importer.history().latest()->success);
 
     // Disabled WAV support and invalid settings are rejected transactionally.
     const std::size_t configured_frames = projects.project().audio()->frame_count();
