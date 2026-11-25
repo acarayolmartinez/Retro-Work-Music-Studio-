@@ -149,6 +149,36 @@ int main() {
     assert(projects.is_modified());
     std::remove(wave_path.c_str());
 
+    // Automatic persistence stores every subsequent import attempt.
+    const std::string history_path = "rms_import_manager_history.rmslog";
+    assert(importer.configure_history_store(history_path, false, &error));
+    assert(error.empty());
+    assert(importer.save_history(&error));
+    assert(error.empty());
+
+    const std::size_t before_persisted_attempt = importer.history().size();
+    assert(!importer.import_file("persisted-unsupported.mp3", &error));
+    assert(importer.history().size() == before_persisted_attempt + 1);
+    assert(importer.history_store_error().empty());
+
+    rms::audio::AudioProjectManager restored_projects(1);
+    rms::audio::AudioImportManager restored_importer(restored_projects);
+    assert(restored_importer.configure_history_store(history_path, true, &error));
+    assert(error.empty());
+    assert(restored_importer.history().size() == importer.history().size());
+    assert(restored_importer.history().latest() != 0);
+    assert(restored_importer.history().latest()->file_name ==
+           "persisted-unsupported.mp3");
+
+    // A persistence error is exposed separately and does not undo an import.
+    assert(importer.configure_history_store(".", false, &error));
+    const rms::audio::AudioImportReport import_with_store_error =
+        importer.import_file_with_report(wav_path);
+    assert(import_with_store_error.success);
+    assert(projects.project().has_audio());
+    assert(!importer.history_store_error().empty());
+
+    std::remove(history_path.c_str());
     std::remove(wav_path.c_str());
     std::cout << "AudioImportManager tests passed.\n";
     return 0;
