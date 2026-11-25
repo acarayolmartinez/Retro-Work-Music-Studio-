@@ -2,6 +2,7 @@
 
 #include "rms/audio/audio_file_reader.h"
 #include "rms/audio/audio_import_format.h"
+#include "rms/audio/audio_import_history_store.h"
 
 #include <exception>
 #include <memory>
@@ -19,11 +20,97 @@ std::string format_name(AudioImportFormat format) {
     return format == AudioImportFormat::Wav ? "WAV" : "Unknown";
 }
 
+void set_error(std::string* error, const std::string& message) {
+    if (error != 0) *error = message;
+}
+
 } // namespace
 
 AudioImportManager::AudioImportManager(AudioProjectManager& project_manager)
     : project_manager_(project_manager),
-      history_() {
+      history_(),
+      history_store_path_(),
+      history_store_error_() {
+}
+
+const AudioImportHistory& AudioImportManager::history() const {
+    return history_;
+}
+
+bool AudioImportManager::configure_history_store(const std::string& path,
+                                                  bool load_existing,
+                                                  std::string* error) {
+    if (path.empty()) {
+        set_error(error, "History store path is empty.");
+        return false;
+    }
+
+    if (load_existing) {
+        AudioImportHistory loaded;
+        std::string load_error;
+        if (!AudioImportHistoryStore::load(path, loaded, &load_error)) {
+            history_store_error_ = load_error;
+            set_error(error, load_error);
+            return false;
+        }
+        history_ = loaded;
+    }
+
+    history_store_path_ = path;
+    history_store_error_.clear();
+    if (error != 0) error->clear();
+    return true;
+}
+
+bool AudioImportManager::save_history(std::string* error) {
+    if (history_store_path_.empty()) {
+        set_error(error, "History store has not been configured.");
+        return false;
+    }
+    std::string store_error;
+    if (!AudioImportHistoryStore::save(history_, history_store_path_,
+                                       &store_error)) {
+        history_store_error_ = store_error;
+        set_error(error, store_error);
+        return false;
+    }
+    history_store_error_.clear();
+    if (error != 0) error->clear();
+    return true;
+}
+
+bool AudioImportManager::load_history(std::string* error) {
+    if (history_store_path_.empty()) {
+        set_error(error, "History store has not been configured.");
+        return false;
+    }
+    std::string store_error;
+    if (!AudioImportHistoryStore::load(history_store_path_, history_,
+                                       &store_error)) {
+        history_store_error_ = store_error;
+        set_error(error, store_error);
+        return false;
+    }
+    history_store_error_.clear();
+    if (error != 0) error->clear();
+    return true;
+}
+
+const std::string& AudioImportManager::history_store_path() const {
+    return history_store_path_;
+}
+
+const std::string& AudioImportManager::history_store_error() const {
+    return history_store_error_;
+}
+
+void AudioImportManager::record_import(const AudioImportReport& report) {
+    history_.add(report);
+    if (!history_store_path_.empty()) {
+        // Persistence failures are reported separately and never change the
+        // result of the audio import itself.
+        save_history(&history_store_error_);
+    }
 }
 
 bool AudioImportManager::import_wav(const std::string& path,
@@ -48,10 +135,6 @@ AudioImportReport AudioImportManager::import_file_with_report(
     return import_file_with_report(path, config);
 }
 
-const AudioImportHistory& AudioImportManager::history() const {
-    return history_;
-}
-
 AudioImportReport AudioImportManager::import_file_with_report(
     const std::string& path, const AudioImportConfig& config) {
     AudioImportReport report;
@@ -64,13 +147,13 @@ AudioImportReport AudioImportManager::import_file_with_report(
 
     if (!config.is_valid()) {
         report.error_message = config.validation_error();
-        history_.add(report);
+        record_import(report);
         return report;
     }
     if (!config.allows_path(path)) {
         report.error_message =
             "The file extension is disabled or unsupported by the import configuration.";
-        history_.add(report);
+        record_import(report);
         return report;
     }
 
@@ -80,7 +163,7 @@ AudioImportReport AudioImportManager::import_file_with_report(
             buffer.reset(new AudioBuffer(AudioFileReader::read_wav(path)));
         } else {
             report.error_message = "The detected audio format is not implemented.";
-            history_.add(report);
+            record_import(report);
             return report;
         }
 
@@ -94,11 +177,11 @@ AudioImportReport AudioImportManager::import_file_with_report(
             *buffer, config.frames_per_waveform_point);
         project_manager_.mark_modified();
         report.success = true;
-        history_.add(report);
+        record_import(report);
         return report;
     } catch (const std::exception& exception) {
         report.error_message = exception.what();
-        history_.add(report);
+        record_import(report);
         return report;
     }
 }
@@ -106,9 +189,7 @@ AudioImportReport AudioImportManager::import_file_with_report(
 bool AudioImportManager::import_file(const std::string& path,
                                      std::string* error) {
     const AudioImportReport report = import_file_with_report(path);
-    if (error != 0) {
-        *error = report.error_message;
-    }
+    if (error != 0) *error = report.error_message;
     return report.success;
 }
 
@@ -116,9 +197,7 @@ bool AudioImportManager::import_file(const std::string& path,
                                      const AudioImportConfig& config,
                                      std::string* error) {
     const AudioImportReport report = import_file_with_report(path, config);
-    if (error != 0) {
-        *error = report.error_message;
-    }
+    if (error != 0) *error = report.error_message;
     return report.success;
 }
 
