@@ -1,6 +1,7 @@
 #include "rms/audio/audio_import_manager.h"
 
 #include "rms/audio/audio_file_reader.h"
+#include "rms/audio/audio_import_format.h"
 
 #include <exception>
 
@@ -22,13 +23,35 @@ bool AudioImportManager::import_wav(const std::string& path,
 bool AudioImportManager::import_wav(const std::string& path,
                                     const AudioImportConfig& config,
                                     std::string* error) {
+    return import_file(path, config, error);
+}
+
+bool AudioImportManager::import_file(const std::string& path,
+                                     std::string* error) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return import_file(path, config, error);
+}
+
+bool AudioImportManager::import_file(const std::string& path,
+                                     const AudioImportConfig& config,
+                                     std::string* error) {
     if (!config.is_valid()) {
         if (error != 0) {
             *error = config.validation_error();
         }
         return false;
     }
-    if (!config.allow_wav) {
+
+    const AudioImportFormat format = AudioImportFormatInfo::detect(path);
+    if (format == AudioImportFormat::Unknown) {
+        if (error != 0) {
+            *error = "Unsupported audio file format. Supported extensions: .wav, .wave.";
+        }
+        return false;
+    }
+    if (format == AudioImportFormat::Wav && !config.allow_wav) {
         if (error != 0) {
             *error = "WAV import is disabled by the import configuration.";
         }
@@ -36,7 +59,16 @@ bool AudioImportManager::import_wav(const std::string& path,
     }
 
     try {
-        const AudioBuffer buffer = AudioFileReader::read_wav(path);
+        AudioBuffer buffer;
+        if (format == AudioImportFormat::Wav) {
+            buffer = AudioFileReader::read_wav(path);
+        } else {
+            if (error != 0) {
+                *error = "The detected audio format is not implemented.";
+            }
+            return false;
+        }
+
         project_manager_.project().load_audio(
             buffer, config.frames_per_waveform_point);
         project_manager_.mark_modified();
