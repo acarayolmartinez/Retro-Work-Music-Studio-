@@ -22,7 +22,8 @@ std::string format_name(AudioImportFormat format) {
 } // namespace
 
 AudioImportManager::AudioImportManager(AudioProjectManager& project_manager)
-    : project_manager_(project_manager) {
+    : project_manager_(project_manager),
+      history_() {
 }
 
 bool AudioImportManager::import_wav(const std::string& path,
@@ -47,6 +48,10 @@ AudioImportReport AudioImportManager::import_file_with_report(
     return import_file_with_report(path, config);
 }
 
+const AudioImportHistory& AudioImportManager::history() const {
+    return history_;
+}
+
 AudioImportReport AudioImportManager::import_file_with_report(
     const std::string& path, const AudioImportConfig& config) {
     AudioImportReport report;
@@ -59,11 +64,13 @@ AudioImportReport AudioImportManager::import_file_with_report(
 
     if (!config.is_valid()) {
         report.error_message = config.validation_error();
+        history_.add(report);
         return report;
     }
     if (!config.allows_path(path)) {
         report.error_message =
             "The file extension is disabled or unsupported by the import configuration.";
+        history_.add(report);
         return report;
     }
 
@@ -73,6 +80,7 @@ AudioImportReport AudioImportManager::import_file_with_report(
             buffer.reset(new AudioBuffer(AudioFileReader::read_wav(path)));
         } else {
             report.error_message = "The detected audio format is not implemented.";
+            history_.add(report);
             return report;
         }
 
@@ -86,9 +94,11 @@ AudioImportReport AudioImportManager::import_file_with_report(
             *buffer, config.frames_per_waveform_point);
         project_manager_.mark_modified();
         report.success = true;
+        history_.add(report);
         return report;
     } catch (const std::exception& exception) {
         report.error_message = exception.what();
+        history_.add(report);
         return report;
     }
 }
