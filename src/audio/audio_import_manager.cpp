@@ -46,15 +46,9 @@ bool AudioImportManager::import_file(const std::string& path,
     }
 
     const AudioImportFormat format = AudioImportFormatInfo::detect(path);
-    if (format == AudioImportFormat::Unknown) {
+    if (!config.allows_path(path)) {
         if (error != 0) {
-            *error = "Unsupported audio file format. Supported extensions: .wav, .wave.";
-        }
-        return false;
-    }
-    if (format == AudioImportFormat::Wav && !config.allow_wav) {
-        if (error != 0) {
-            *error = "WAV import is disabled by the import configuration.";
+            *error = "The file extension is disabled or unsupported by the import configuration.";
         }
         return false;
     }
