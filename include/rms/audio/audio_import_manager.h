@@ -2,6 +2,7 @@
 #define RMS_AUDIO_AUDIO_IMPORT_MANAGER_H
 
 #include "rms/audio/audio_import_config.h"
+#include "rms/audio/audio_import_history.h"
 #include "rms/audio/audio_import_report.h"
 #include "rms/audio/audio_project_manager.h"
 
@@ -13,6 +14,8 @@ namespace audio {
 class AudioImportManager {
 public:
     explicit AudioImportManager(AudioProjectManager& project_manager);
+
+    const AudioImportHistory& history() const;
 
     AudioImportReport import_file_with_report(const std::string& path);
     AudioImportReport import_file_with_report(
@@ -30,6 +33,7 @@ public:
 
 private:
     AudioProjectManager& project_manager_;
+    AudioImportHistory history_;
 };
 
 } // namespace audio
