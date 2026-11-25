@@ -4,6 +4,7 @@
 #include "rms/audio/audio_import_format.h"
 
 #include <exception>
+#include <memory>
 
 namespace rms {
 namespace audio {
@@ -59,9 +60,9 @@ bool AudioImportManager::import_file(const std::string& path,
     }
 
     try {
-        AudioBuffer buffer;
+        std::unique_ptr<AudioBuffer> buffer;
         if (format == AudioImportFormat::Wav) {
-            buffer = AudioFileReader::read_wav(path);
+            buffer.reset(new AudioBuffer(AudioFileReader::read_wav(path)));
         } else {
             if (error != 0) {
                 *error = "The detected audio format is not implemented.";
@@ -70,7 +71,7 @@ bool AudioImportManager::import_file(const std::string& path,
         }
 
         project_manager_.project().load_audio(
-            buffer, config.frames_per_waveform_point);
+            *buffer, config.frames_per_waveform_point);
         project_manager_.mark_modified();
         if (error != 0) {
             error->clear();
