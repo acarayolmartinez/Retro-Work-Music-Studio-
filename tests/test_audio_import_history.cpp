@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <vector>
 
 int main() {
     rms::audio::AudioImportHistory history;
@@ -27,6 +28,16 @@ int main() {
     assert(history.latest()->file_name == "broken.mp3");
     assert(!history.latest()->success);
     assert(history.latest()->error_message == "Unsupported format");
+    assert(history.successful_count() == 1);
+    assert(history.failed_count() == 1);
+    const std::vector<rms::audio::AudioImportReport> latest = history.recent(1);
+    assert(latest.size() == 1);
+    assert(latest[0].file_name == "broken.mp3");
+    assert(history.recent(0).empty());
+    assert(history.recent(10).size() == 2);
+    assert(history.find_by_file_name("FIRST").size() == 1);
+    assert(history.find_by_file_name(".mp3").size() == 1);
+    assert(history.find_by_file_name("").empty());
 
     history.clear();
     assert(history.empty());
