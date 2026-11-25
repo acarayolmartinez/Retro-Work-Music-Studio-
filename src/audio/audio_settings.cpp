@@ -7,13 +7,16 @@ AudioSettings::AudioSettings()
     : output_device_index(-1),
       sample_rate(44100),
       channel_count(2),
-      frames_per_buffer(0) {
+      frames_per_buffer(0),
+      import_history_path("rms_import_history.rmslog"),
+      import_history_auto_save(true) {
 }
 
 bool AudioSettings::is_valid() const {
     return output_device_index >= -1 &&
            sample_rate > 0 &&
-           channel_count > 0;
+           channel_count > 0 &&
+           !import_history_path.empty();
 }
 
 std::string AudioSettings::validation_error() const {
@@ -25,6 +28,9 @@ std::string AudioSettings::validation_error() const {
     }
     if (channel_count == 0) {
         return "Channel count must be greater than zero.";
+    }
+    if (import_history_path.empty()) {
+        return "Import history path must not be empty.";
     }
     return std::string();
 }
