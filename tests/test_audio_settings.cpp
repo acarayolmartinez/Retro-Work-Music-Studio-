@@ -8,6 +8,8 @@ int main() {
     assert(settings.sample_rate == 44100);
     assert(settings.channel_count == 2);
     assert(settings.frames_per_buffer == 0);
+    assert(settings.import_history_path == "rms_import_history.rmslog");
+    assert(settings.import_history_auto_save);
     assert(settings.is_valid());
     assert(settings.validation_error().empty());
 
@@ -28,6 +30,12 @@ int main() {
 
     settings.channel_count = 1;
     settings.frames_per_buffer = 256;
+    settings.import_history_path = "custom/history.rmslog";
+    settings.import_history_auto_save = false;
+    assert(settings.is_valid());
+    settings.import_history_path.clear();
+    assert(!settings.is_valid());
+    settings.import_history_path = "custom/history.rmslog";
     assert(settings.is_valid());
     return 0;
 }
