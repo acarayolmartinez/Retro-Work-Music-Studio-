@@ -7,6 +7,7 @@
 #include "rms/audio/audio_project_manager.h"
 
 #include <string>
+#include <vector>
 
 namespace rms {
 namespace audio {
@@ -16,6 +17,14 @@ public:
     explicit AudioImportManager(AudioProjectManager& project_manager);
 
     const AudioImportHistory& history() const;
+    std::size_t successful_import_count() const;
+    std::size_t failed_import_count() const;
+    std::vector<AudioImportReport> recent_imports(std::size_t limit) const;
+    std::vector<AudioImportReport> find_imports(
+        const std::string& file_name_query) const;
+    // Persists an empty history when a store is configured. On failure,
+    // the previous in-memory history is restored.
+    bool clear_history(std::string* error = 0);
 
     // Enables automatic persistence. Existing history is loaded when requested.
     bool configure_history_store(const std::string& path,
