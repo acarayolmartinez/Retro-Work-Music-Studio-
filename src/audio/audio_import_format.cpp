@@ -35,7 +35,7 @@ AudioImportFormat AudioImportFormatInfo::detect(const std::string& path) {
 }
 
 std::string AudioImportFormatInfo::extension_from_path(const std::string& path) {
-    const std::string::size_type slash = path.find_last_of("/\\\\");
+    const std::string::size_type slash = path.find_last_of("/\\");
     const std::string::size_type dot = path.find_last_of('.');
     const std::string::size_type filename_start =
         slash == std::string::npos ? 0 : slash + 1;
