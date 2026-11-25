@@ -22,6 +22,8 @@ public:
                                  bool load_existing = true,
                                  std::string* error = 0);
     bool save_history(std::string* error = 0);
+    void set_history_auto_save(bool enabled);
+    bool history_auto_save() const;
     bool load_history(std::string* error = 0);
     const std::string& history_store_path() const;
     const std::string& history_store_error() const;
@@ -46,7 +48,7 @@ private:
     AudioProjectManager& project_manager_;
     AudioImportHistory history_;
     std::string history_store_path_;
-    std::string history_store_error_;
+    std::string history_store_error_;\n    bool history_auto_save_;
 };
 
 } // namespace audio
