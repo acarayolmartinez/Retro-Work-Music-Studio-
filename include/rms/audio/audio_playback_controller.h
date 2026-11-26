@@ -17,6 +17,8 @@ public:
     explicit AudioPlaybackController(AudioSettingsManager& settings_manager);
 
     void load(const AudioBuffer& buffer, bool enable_output = true);
+    void load(const AudioBuffer& buffer, const AudioSettings& settings,
+              bool enable_output = true);
     void unload();
     void play();
     void pause();
