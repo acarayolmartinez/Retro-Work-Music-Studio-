@@ -15,7 +15,7 @@ The first milestone is a **Music Analyzer** that can import audio and help estim
 
 **v0.2.0 — Application Skeleton (in progress)**
 
-The repository now contains an initial CMake-based C++11 executable and a small core application module. Audio, DSP, analysis, and desktop UI functionality have not been implemented yet.
+The repository contains a C++11 audio-analysis core, WAV import, waveform data and viewport models, project management, and an optional wxWidgets desktop application. The desktop window can now open WAV files and display their waveform and basic audio metadata.
 
 ### Technology direction
 
@@ -27,7 +27,7 @@ The entire application, including its desktop interface, will be developed in **
 - A modular architecture separating core/domain, audio, DSP, analysis, and desktop UI.
 - PortAudio as the initial candidate for cross-platform audio I/O.
 - Custom DSP utilities, with an FFT implementation to be selected (own implementation or a compatible library).
-- A C++11-compatible desktop UI toolkit; wxWidgets and FLTK are candidates to evaluate.
+- wxWidgets 3.2 for the optional native desktop interface.
 - CTest plus a C++11-compatible testing framework.
 - Dependencies must be checked for C++11 compatibility before adoption.
 
@@ -65,7 +65,7 @@ cmake --build build-desktop -j$(nproc)
 ./build-desktop/rms_desktop
 ```
 
-The default build keeps `RMS_BUILD_DESKTOP=OFF`, so the core application and tests do not require wxWidgets.
+The default build keeps `RMS_BUILD_DESKTOP=OFF`, so the core application and tests do not require wxWidgets. In the desktop app, choose **File → Open Audio…** to load a PCM WAV file and view its waveform.
 
 ### Source layout
 
@@ -87,7 +87,7 @@ El primer hito será un **Music Analyzer** capaz de importar audio y ayudar a es
 
 **v0.2.0 — Application Skeleton (en desarrollo)**
 
-El repositorio ya contiene un ejecutable inicial C++11 basado en CMake y un pequeño módulo de aplicación principal. Todavía no se han implementado las funciones de audio, DSP, análisis ni interfaz gráfica.
+El repositorio contiene un núcleo de análisis de audio en C++11, importación WAV, modelos de forma de onda y viewport, gestión de proyectos y una aplicación de escritorio opcional con wxWidgets. La ventana ya permite abrir archivos WAV y mostrar su forma de onda y metadatos básicos.
 
 ### Orientación tecnológica
 
@@ -98,7 +98,7 @@ Toda la aplicación, incluida la interfaz de escritorio, se desarrollará en **C
 - Arquitectura modular que separa núcleo/dominio, audio, DSP, análisis e interfaz de escritorio.
 - PortAudio como primera opción candidata para entrada/salida de audio multiplataforma.
 - Utilidades DSP propias y una implementación FFT aún por decidir (propia o mediante una biblioteca compatible).
-- Biblioteca de interfaz de escritorio compatible con C++11; wxWidgets y FLTK son candidatas para evaluar.
+- wxWidgets 3.2 para la interfaz de escritorio nativa opcional.
 - CTest y un framework de pruebas compatible con C++11.
 - Se comprobará la compatibilidad con C++11 de cada dependencia antes de incorporarla.
 
@@ -115,6 +115,8 @@ cmake --build build
 ```
 
 En Windows, ejecuta el archivo generado dentro de la carpeta de compilación (por ejemplo, `build\Debug\rms.exe` con un generador multiconfiguración).
+
+La aplicación de escritorio permite seleccionar **File → Open Audio…** para cargar un archivo WAV PCM y visualizar su forma de onda.
 
 ### Estructura del código
 
