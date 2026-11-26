@@ -13,6 +13,18 @@
 namespace rms {
 namespace audio {
 
+struct AudioImportBatchReport {
+    std::vector<AudioImportReport> reports;
+    std::size_t successful_count;
+    std::size_t failed_count;
+
+    AudioImportBatchReport()
+        : reports(), successful_count(0), failed_count(0) {}
+
+    std::size_t total_count() const { return reports.size(); }
+    bool all_succeeded() const { return failed_count == 0; }
+};
+
 class AudioImportManager {
 public:
     explicit AudioImportManager(AudioProjectManager& project_manager);
@@ -54,6 +66,12 @@ public:
     bool load_history(std::string* error = 0);
     const std::string& history_store_path() const;
     const std::string& history_store_error() const;
+
+    AudioImportBatchReport import_files(
+        const std::vector<std::string>& paths);
+    AudioImportBatchReport import_files(
+        const std::vector<std::string>& paths,
+        const AudioImportConfig& config);
 
     AudioImportReport import_file_with_report(const std::string& path);
     AudioImportReport import_file_with_report(
