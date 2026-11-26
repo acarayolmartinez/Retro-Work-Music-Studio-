@@ -282,6 +282,46 @@ int main() {
     assert(valid_preflight.valid_count == 2);
     assert(valid_preflight.rejected_count == 0);
 
+    // Selective import runs only preflight-approved entries and keeps the
+    // original entry index for every attempted import.
+    const std::size_t selective_history_before = importer.history().size();
+    const rms::audio::AudioImportSelectiveBatchReport selective_batch =
+        importer.import_validated_files(preflight_paths);
+    assert(selective_batch.preflight.total_count() == 5);
+    assert(selective_batch.preflight.valid_count == 1);
+    assert(selective_batch.preflight.rejected_count == 4);
+    assert(selective_batch.imported_count() == 1);
+    assert(selective_batch.skipped_count() == 4);
+    assert(selective_batch.imports.successful_count == 1);
+    assert(selective_batch.imports.failed_count == 0);
+    assert(selective_batch.imported_entry_indices.size() == 1);
+    assert(selective_batch.imported_entry_indices[0] == 0);
+    assert(selective_batch.imports.reports[0].file_path ==
+           selective_batch.preflight.entries[0].file_path);
+    assert(importer.history().size() == selective_history_before + 1);
+
+    // Selective import also preserves mapping when the valid subset is limited.
+    rms::audio::AudioImportBatchOptions selective_limit;
+    selective_limit.max_files = 1;
+    const rms::audio::AudioImportSelectiveBatchReport limited_selective =
+        importer.import_validated_files(successful_paths,
+                                        rms::audio::AudioImportConfig(),
+                                        selective_limit);
+    assert(limited_selective.preflight.valid_count == 2);
+    assert(limited_selective.imported_count() == 1);
+    assert(limited_selective.imports.pending_count == 1);
+    assert(limited_selective.imports.limit_reached);
+    assert(limited_selective.imported_entry_indices.size() == 1);
+    assert(limited_selective.imported_entry_indices[0] == 0);
+
+    const rms::audio::AudioImportSelectiveBatchReport rejected_selective =
+        importer.import_validated_files(successful_paths,
+                                        invalid_preflight_config);
+    assert(rejected_selective.preflight.rejected_count == 2);
+    assert(rejected_selective.imported_count() == 0);
+    assert(rejected_selective.imports.pending_count == 0);
+    assert(rejected_selective.imported_entry_indices.empty());
+
     // Configurable batch limits, fail-fast, cancellation and progress.
     rms::audio::AudioImportBatchOptions limited_options;
     limited_options.max_files = 1;
