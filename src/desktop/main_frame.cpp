@@ -104,7 +104,8 @@ MainFrame::MainFrame()
       project_manager_(1024),
       import_manager_(project_manager_),
       waveform_view_(0),
-      project_status_(0) {
+      project_status_(0),
+      current_audio_name_() {
     wxMenu* file_menu = new wxMenu();
     file_menu->Append(ID_MENU_OPEN_AUDIO, "&Open Audio...\\tCtrl+O");
     file_menu->AppendSeparator();
@@ -178,8 +179,9 @@ void MainFrame::on_open_audio(wxCommandEvent&) {
         return;
     }
 
+    current_audio_name_ = report.file_name;
     refresh_project_view();
-    SetStatusText("Loaded " + dialog.GetFilename());
+    SetStatusText(wxString("Loaded ") + dialog.GetFilename());
 }
 
 void MainFrame::refresh_project_view() {
@@ -195,12 +197,13 @@ void MainFrame::refresh_project_view() {
     const double duration =
         static_cast<double>(buffer->frame_count()) /
         static_cast<double>(buffer->sample_rate());
-    project_status_->SetLabel(wxString::Format(
-        "%s  |  %.2f s  |  %u Hz  |  %u ch",
-        wxFileName(project_manager_.file_path()).GetFullName(),
+    const wxString details = wxString::Format(
+        "%.2f s  |  %u Hz  |  %u ch",
         duration,
         static_cast<unsigned int>(buffer->sample_rate()),
-        static_cast<unsigned int>(buffer->channel_count())));
+        static_cast<unsigned int>(buffer->channel_count()));
+    project_status_->SetLabel(
+        wxString::FromUTF8(current_audio_name_.c_str()) + "  |  " + details);
     Layout();
 }
 
