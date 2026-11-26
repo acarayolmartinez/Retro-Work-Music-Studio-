@@ -7,6 +7,7 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <ctime>
 
 int main() {
     rms::audio::AudioImportHistory history;
@@ -44,6 +45,51 @@ int main() {
     filtered.push_back(report);
     assert(rms::audio::AudioImportHistoryCsvExporter::save(
         filtered, path, &error));
+    std::remove(path.c_str());
+
+    rms::audio::AudioImportReport success = report;
+    success.success = true;
+    success.timestamp = static_cast<std::time_t>(123457);
+    success.file_name = "second.wav";
+    history.add(success);
+    const std::vector<rms::audio::AudioImportReport> entries = history.entries();
+
+    assert(rms::audio::AudioImportHistoryCsvExporter::save_filtered(
+        entries, path, rms::audio::AudioImportHistoryCsvFilter::Successful,
+        rms::audio::AudioImportHistoryCsvOrder::OldestFirst, &error));
+    {
+        std::ifstream filtered_input(path.c_str(), std::ios::binary);
+        const std::string filtered_csv(
+            (std::istreambuf_iterator<char>(filtered_input)),
+            std::istreambuf_iterator<char>());
+        assert(filtered_csv.find("second.wav") != std::string::npos);
+        assert(filtered_csv.find("mix,") == std::string::npos);
+    }
+    std::remove(path.c_str());
+
+    assert(rms::audio::AudioImportHistoryCsvExporter::save_filtered(
+        entries, path, rms::audio::AudioImportHistoryCsvFilter::Failed,
+        rms::audio::AudioImportHistoryCsvOrder::NewestFirst, &error));
+    {
+        std::ifstream filtered_input(path.c_str(), std::ios::binary);
+        const std::string filtered_csv(
+            (std::istreambuf_iterator<char>(filtered_input)),
+            std::istreambuf_iterator<char>());
+        assert(filtered_csv.find("mix,") != std::string::npos);
+        assert(filtered_csv.find("second.wav") == std::string::npos);
+    }
+    std::remove(path.c_str());
+
+    assert(rms::audio::AudioImportHistoryCsvExporter::save_filtered(
+        entries, path, rms::audio::AudioImportHistoryCsvFilter::All,
+        rms::audio::AudioImportHistoryCsvOrder::NewestFirst, &error));
+    {
+        std::ifstream ordered_input(path.c_str(), std::ios::binary);
+        const std::string ordered_csv(
+            (std::istreambuf_iterator<char>(ordered_input)),
+            std::istreambuf_iterator<char>());
+        assert(ordered_csv.find("second.wav") < ordered_csv.find("mix,"));
+    }
     std::remove(path.c_str());
 
     assert(!rms::audio::AudioImportHistoryCsvExporter::save(
