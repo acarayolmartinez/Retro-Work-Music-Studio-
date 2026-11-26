@@ -7,22 +7,46 @@
 #include "rms/audio/audio_project_manager.h"
 #include "rms/audio/audio_import_history_csv_exporter.h"
 
+#include <functional>
 #include <string>
 #include <vector>
 
 namespace rms {
 namespace audio {
 
+struct AudioImportBatchOptions {
+    // Zero means no explicit file-count limit.
+    std::size_t max_files;
+    bool stop_on_error;
+    // The caller may set this flag from a progress callback to cancel.
+    bool* cancel_requested;
+    // Called after each processed file with (processed, pending).
+    std::function<void(std::size_t, std::size_t)> progress_callback;
+
+    AudioImportBatchOptions()
+        : max_files(0), stop_on_error(false), cancel_requested(0),
+          progress_callback() {}
+};
+
 struct AudioImportBatchReport {
     std::vector<AudioImportReport> reports;
     std::size_t successful_count;
     std::size_t failed_count;
+    std::size_t pending_count;
+    bool cancelled;
+    bool stopped_on_error;
+    bool limit_reached;
 
     AudioImportBatchReport()
-        : reports(), successful_count(0), failed_count(0) {}
+        : reports(), successful_count(0), failed_count(0),
+          pending_count(0), cancelled(false), stopped_on_error(false),
+          limit_reached(false) {}
 
     std::size_t total_count() const { return reports.size(); }
-    bool all_succeeded() const { return failed_count == 0; }
+    std::size_t processed_count() const { return reports.size(); }
+    bool all_succeeded() const {
+        return failed_count == 0 && pending_count == 0;
+    }
 };
 
 class AudioImportManager {
@@ -72,6 +96,13 @@ public:
     AudioImportBatchReport import_files(
         const std::vector<std::string>& paths,
         const AudioImportConfig& config);
+    AudioImportBatchReport import_files(
+        const std::vector<std::string>& paths,
+        const AudioImportBatchOptions& options);
+    AudioImportBatchReport import_files(
+        const std::vector<std::string>& paths,
+        const AudioImportConfig& config,
+        const AudioImportBatchOptions& options);
 
     AudioImportReport import_file_with_report(const std::string& path);
     AudioImportReport import_file_with_report(
