@@ -45,7 +45,7 @@ CMakeLists.txt
 | Audio I/O | PortAudio | Candidate backend; validate supported platforms |
 | DSP | Custom C++11 modules | Keep algorithms testable and independent |
 | FFT | Own implementation or FFTW3 | Decide after evaluating requirements and integration |
-| Desktop UI | wxWidgets or FLTK | Evaluate C++11 support, accessibility, and platform behavior |
+| Desktop UI | wxWidgets | Selected in [ADR 0001](decisions/0001-desktop-gui-toolkit.md); C++11 required |
 | Tests | CTest + Catch2 v2 or another C++11-compatible framework | Verify exact dependency versions |
 | Serialization | JSON or a documented container | Select library only after C++11 compatibility review |
 
@@ -70,7 +70,7 @@ The proposed native extension is `.rms`. Initially it may be a documented JSON-b
 
 ## Open decisions / Decisiones pendientes
 
-- Desktop UI toolkit: wxWidgets, FLTK, or another verified C++11-compatible option.
+- Exact wxWidgets release and CMake integration: pin and validate during the desktop-target implementation.
 - Audio backend details and supported operating systems.
 - Audio file formats and decoding dependencies.
 - Internal sample representation and precision.
