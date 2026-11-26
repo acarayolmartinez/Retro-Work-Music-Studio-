@@ -13,6 +13,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(RMS_BUILD_TESTS "Build RMS unit tests" OFF)
 option(RMS_ENABLE_PORTAUDIO "Enable real audio output through PortAudio" OFF)
 
+option(RMS_BUILD_DESKTOP "Build the wxWidgets desktop application" OFF)
+
 add_library(rms_core
     src/core/application.cpp
     src/audio/audio_buffer.cpp
@@ -74,6 +76,34 @@ if(MSVC)
 else()
     target_compile_options(rms_core PRIVATE -Wall -Wextra -pedantic)
     target_compile_options(rms PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+
+if(RMS_BUILD_DESKTOP)
+    find_package(wxWidgets 3.2 REQUIRED COMPONENTS core base)
+    include(${wxWidgets_USE_FILE})
+
+    add_executable(rms_desktop
+        src/desktop/main.cpp
+        src/desktop/main_frame.cpp
+    )
+
+    target_include_directories(rms_desktop
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(rms_desktop
+        PRIVATE
+            rms_core
+            ${wxWidgets_LIBRARIES}
+    )
+
+    if(MSVC)
+        target_compile_options(rms_desktop PRIVATE /W4)
+    else()
+        target_compile_options(rms_desktop PRIVATE -Wall -Wextra -pedantic)
+    endif()
 endif()
 
 if(RMS_BUILD_TESTS)
