@@ -412,6 +412,65 @@ AudioImportSelectiveBatchReport AudioImportManager::import_selected_validated_fi
     return result;
 }
 
+AudioImportRetryReport AudioImportManager::retry_failed_imports(
+    const AudioImportBatchReport& original,
+    const std::vector<std::size_t>& excluded_indices) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return retry_failed_imports(
+        original, excluded_indices, config, AudioImportBatchOptions());
+}
+
+AudioImportRetryReport AudioImportManager::retry_failed_imports(
+    const AudioImportBatchReport& original,
+    const std::vector<std::size_t>& excluded_indices,
+    const AudioImportConfig& config) {
+    return retry_failed_imports(
+        original, excluded_indices, config, AudioImportBatchOptions());
+}
+
+AudioImportRetryReport AudioImportManager::retry_failed_imports(
+    const AudioImportBatchReport& original,
+    const std::vector<std::size_t>& excluded_indices,
+    const AudioImportConfig& config,
+    const AudioImportBatchOptions& options) {
+    AudioImportRetryReport result;
+    std::vector<bool> excluded(original.reports.size(), false);
+
+    for (std::size_t i = 0; i < excluded_indices.size(); ++i) {
+        const std::size_t index = excluded_indices[i];
+        if (index >= original.reports.size()) {
+            result.selection_valid = false;
+            result.selection_error = "Excluded report index is out of range.";
+            return result;
+        }
+        if (excluded[index]) {
+            result.selection_valid = false;
+            result.selection_error = "Excluded report indices must be unique.";
+            return result;
+        }
+        excluded[index] = true;
+    }
+
+    std::vector<std::string> retry_paths;
+    for (std::size_t i = 0; i < original.reports.size(); ++i) {
+        if (!original.reports[i].success) {
+            if (excluded[i]) {
+                ++result.excluded_count;
+            } else {
+                retry_paths.push_back(original.reports[i].file_path);
+                result.source_report_indices.push_back(i);
+                ++result.failed_count;
+            }
+        }
+    }
+
+    result.retries = import_files(retry_paths, config, options);
+    result.source_report_indices.resize(result.retries.processed_count());
+    return result;
+}
+
 AudioImportReport AudioImportManager::import_file_with_report(
     const std::string& path) {
     AudioImportConfig config;
