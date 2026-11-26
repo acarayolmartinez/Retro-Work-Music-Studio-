@@ -23,6 +23,7 @@ namespace desktop {
 namespace {
 
 const int ID_MENU_OPEN_AUDIO = wxID_HIGHEST + 1;
+const int ID_TIMER_PLAYBACK = wxID_HIGHEST + 2;
 const int ID_MENU_EXIT = wxID_EXIT;
 const int ID_MENU_ABOUT = wxID_ABOUT;
 
@@ -97,6 +98,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_MENU(ID_MENU_OPEN_AUDIO, MainFrame::on_open_audio)
     EVT_MENU(ID_MENU_EXIT, MainFrame::on_exit)
     EVT_MENU(ID_MENU_ABOUT, MainFrame::on_about)
+    EVT_TIMER(ID_TIMER_PLAYBACK, MainFrame::on_playback_timer)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame()
@@ -104,8 +106,13 @@ MainFrame::MainFrame()
               wxDefaultPosition, wxSize(1100, 720)),
       project_manager_(1024),
       import_manager_(project_manager_),
+      settings_manager_(),
+      playback_controller_(settings_manager_),
+      playback_timer_(this, ID_TIMER_PLAYBACK),
       waveform_view_(0),
       project_status_(0),
+      play_button_(0),
+      stop_button_(0),
       current_audio_name_() {
     wxMenu* file_menu = new wxMenu();
     file_menu->Append(ID_MENU_OPEN_AUDIO, "&Open Audio...\\tCtrl+O");
@@ -135,13 +142,15 @@ MainFrame::MainFrame()
     root_sizer->Add(waveform_view_, 1, wxEXPAND | wxLEFT | wxRIGHT, 12);
 
     wxBoxSizer* transport_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxButton* play_button = new wxButton(root, wxID_ANY, "Play");
-    wxButton* stop_button = new wxButton(root, wxID_ANY, "Stop");
-    play_button->Enable(false);
-    stop_button->Enable(false);
+    play_button_ = new wxButton(root, wxID_ANY, "Play");
+    stop_button_ = new wxButton(root, wxID_ANY, "Stop");
+    play_button_->Enable(false);
+    stop_button_->Enable(false);
+    play_button_->Bind(wxEVT_BUTTON, &MainFrame::on_play, this);
+    stop_button_->Bind(wxEVT_BUTTON, &MainFrame::on_stop, this);
 
-    transport_sizer->Add(play_button, 0, wxRIGHT, 8);
-    transport_sizer->Add(stop_button, 0);
+    transport_sizer->Add(play_button_, 0, wxRIGHT, 8);
+    transport_sizer->Add(stop_button_, 0);
     transport_sizer->AddStretchSpacer(1);
     project_status_ = new wxStaticText(root, wxID_ANY, "No project loaded");
     transport_sizer->Add(project_status_, 0, wxALIGN_CENTER_VERTICAL);
@@ -166,11 +175,16 @@ void MainFrame::on_open_audio(wxCommandEvent&) {
     if (dialog.ShowModal() != wxID_OK)
         return;
 
+    // Release the previous stream before AudioProject replaces its buffer.
+    playback_timer_.Stop();
+    playback_controller_.unload();
+
     const std::string path = dialog.GetPath().ToStdString();
     const audio::AudioImportReport report =
         import_manager_.import_file_with_report(path);
 
     if (!report.success) {
+        refresh_transport_status();
         wxMessageBox(
             wxString::FromUTF8(report.error_message.c_str()),
             "Audio import failed",
@@ -185,15 +199,65 @@ void MainFrame::on_open_audio(wxCommandEvent&) {
     SetStatusText(wxString("Loaded ") + dialog.GetFilename());
 }
 
+void MainFrame::on_play(wxCommandEvent&) {
+    if (!playback_controller_.has_output()) {
+        SetStatusText("Audio output unavailable - build with PortAudio enabled");
+        return;
+    }
+
+    playback_controller_.play();
+    if (playback_controller_.state() != audio::PlaybackState::Playing) {
+        const std::string error = playback_controller_.output_error();
+        SetStatusText(error.empty()
+            ? "Unable to start audio playback"
+            : wxString::FromUTF8(error.c_str()));
+        return;
+    }
+
+    playback_timer_.Start(100);
+    refresh_transport_status();
+}
+
+void MainFrame::on_stop(wxCommandEvent&) {
+    playback_timer_.Stop();
+    playback_controller_.stop();
+    refresh_transport_status();
+    SetStatusText("Playback stopped");
+}
+
+void MainFrame::on_playback_timer(wxTimerEvent&) {
+    if (playback_controller_.state() != audio::PlaybackState::Playing) {
+        playback_timer_.Stop();
+        refresh_transport_status();
+        SetStatusText("Playback finished");
+        return;
+    }
+
+    const double position = playback_controller_.position_seconds();
+    const double duration =
+        static_cast<double>(playback_controller_.duration_frames()) /
+        static_cast<double>(project_manager_.project().audio()->sample_rate());
+    SetStatusText(wxString::Format(
+        "Playing  %.1f / %.1f s", position, duration));
+}
+
 void MainFrame::refresh_project_view() {
     const audio::AudioProject& project = project_manager_.project();
     waveform_view_->set_waveform(project.waveform());
 
     const audio::AudioBuffer* buffer = project.audio();
     if (buffer == 0) {
+        playback_controller_.unload();
         project_status_->SetLabel("No project loaded");
+        play_button_->Enable(false);
+        stop_button_->Enable(false);
         return;
     }
+
+    playback_controller_.load(*buffer, true);
+    const bool output_ready = playback_controller_.has_output();
+    play_button_->Enable(output_ready);
+    stop_button_->Enable(output_ready);
 
     const double duration =
         static_cast<double>(buffer->frame_count()) /
@@ -206,9 +270,24 @@ void MainFrame::refresh_project_view() {
     project_status_->SetLabel(
         wxString::FromUTF8(current_audio_name_.c_str()) + "  |  " + details);
     Layout();
+
+    if (!output_ready) {
+        const std::string error = playback_controller_.output_error();
+        SetStatusText(error.empty()
+            ? "Audio loaded - enable PortAudio to use playback"
+            : wxString::FromUTF8(error.c_str()));
+    }
+}
+
+void MainFrame::refresh_transport_status() {
+    const bool output_ready = playback_controller_.has_output();
+    play_button_->Enable(output_ready);
+    stop_button_->Enable(output_ready);
 }
 
 void MainFrame::on_exit(wxCommandEvent&) {
+    playback_timer_.Stop();
+    playback_controller_.unload();
     Close(true);
 }
 
