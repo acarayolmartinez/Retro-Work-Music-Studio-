@@ -1,8 +1,12 @@
 #include "rms/desktop/main_frame.h"
 
+#include "rms/audio/audio_project.h"
+#include "rms/audio/waveform_data.h"
+
 #include <wx/button.h>
 #include <wx/dcbuffer.h>
 #include <wx/dcclient.h>
+#include <wx/filedlg.h>
 #include <wx/menu.h>
 #include <wx/menuitem.h>
 #include <wx/msgdlg.h>
@@ -11,65 +15,100 @@
 #include <wx/stattext.h>
 #include <wx/statusbr.h>
 
+#include <vector>
+
 namespace rms {
 namespace desktop {
 namespace {
 
+const int ID_MENU_OPEN_AUDIO = wxID_HIGHEST + 1;
 const int ID_MENU_EXIT = wxID_EXIT;
 const int ID_MENU_ABOUT = wxID_ABOUT;
 
-class WaveformPlaceholder : public wxPanel {
+} // namespace
+
+class WaveformView : public wxPanel {
 public:
-    explicit WaveformPlaceholder(wxWindow* parent)
+    explicit WaveformView(wxWindow* parent)
         : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                  wxBORDER_SIMPLE) {
+                  wxBORDER_SIMPLE),
+          points_() {
         SetBackgroundStyle(wxBG_STYLE_PAINT);
-        Bind(wxEVT_PAINT, &WaveformPlaceholder::on_paint, this);
+        Bind(wxEVT_PAINT, &WaveformView::on_paint, this);
+    }
+
+    void set_waveform(const std::vector<audio::WaveformPoint>& points) {
+        points_ = points;
+        Refresh();
     }
 
 private:
     void on_paint(wxPaintEvent&) {
         wxAutoBufferedPaintDC dc(this);
         const wxSize size = GetClientSize();
+        const int width = size.GetWidth();
+        const int height = size.GetHeight();
 
-        dc.SetBackground(wxBrush(wxColour(28, 31, 38)));
+        dc.SetBackground(wxBrush(wxColour(24, 28, 35)));
         dc.Clear();
 
-        dc.SetPen(wxPen(wxColour(55, 61, 72), 1));
-        const int horizontal_step = 32;
-        const int vertical_step = 28;
-        for (int x = 0; x < size.GetWidth(); x += horizontal_step) {
-            dc.DrawLine(x, 0, x, size.GetHeight());
-        }
-        for (int y = 0; y < size.GetHeight(); y += vertical_step) {
-            dc.DrawLine(0, y, size.GetWidth(), y);
+        dc.SetPen(wxPen(wxColour(48, 55, 66), 1));
+        for (int x = 0; x < width; x += 40)
+            dc.DrawLine(x, 0, x, height);
+        for (int y = 0; y < height; y += 28)
+            dc.DrawLine(0, y, width, y);
+
+        const int center = height / 2;
+        dc.SetPen(wxPen(wxColour(75, 86, 101), 1));
+        dc.DrawLine(0, center, width, center);
+
+        if (points_.empty() || width <= 0 || height <= 0) {
+            const wxString message = "Waveform view - no audio loaded";
+            wxCoord text_width = 0;
+            wxCoord text_height = 0;
+            dc.SetTextForeground(wxColour(180, 190, 204));
+            dc.GetTextExtent(message, &text_width, &text_height);
+            dc.DrawText(message, (width - text_width) / 2,
+                        (height - text_height) / 2);
+            return;
         }
 
-        dc.SetTextForeground(wxColour(190, 198, 210));
-        dc.SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                          wxFONTWEIGHT_NORMAL));
-        const wxString message = "Waveform view - no audio loaded";
-        wxCoord text_width = 0;
-        wxCoord text_height = 0;
-        dc.GetTextExtent(message, &text_width, &text_height);
-        dc.DrawText(message,
-                    (size.GetWidth() - text_width) / 2,
-                    (size.GetHeight() - text_height) / 2);
+        dc.SetPen(wxPen(wxColour(75, 205, 170), 1));
+        const int amplitude = height / 2 - 12;
+        for (int x = 0; x < width; ++x) {
+            const std::size_t index =
+                static_cast<std::size_t>(x) * points_.size() /
+                static_cast<std::size_t>(width);
+            const audio::WaveformPoint& point =
+                points_[index < points_.size() ? index : points_.size() - 1];
+            const int top = center -
+                static_cast<int>(point.maximum * amplitude);
+            const int bottom = center -
+                static_cast<int>(point.minimum * amplitude);
+            dc.DrawLine(x, top, x, bottom);
+        }
     }
+
+    std::vector<audio::WaveformPoint> points_;
 };
 
-} // namespace
-
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
+    EVT_MENU(ID_MENU_OPEN_AUDIO, MainFrame::on_open_audio)
     EVT_MENU(ID_MENU_EXIT, MainFrame::on_exit)
     EVT_MENU(ID_MENU_ABOUT, MainFrame::on_about)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame()
     : wxFrame(0, wxID_ANY, "RetroWorks Music Studio",
-              wxDefaultPosition, wxSize(1100, 720)) {
+              wxDefaultPosition, wxSize(1100, 720)),
+      project_manager_(1024),
+      import_manager_(project_manager_),
+      waveform_view_(0),
+      project_status_(0) {
     wxMenu* file_menu = new wxMenu();
-    file_menu->Append(ID_MENU_EXIT, "E&xit\tAlt-F4");
+    file_menu->Append(ID_MENU_OPEN_AUDIO, "&Open Audio...\\tCtrl+O");
+    file_menu->AppendSeparator();
+    file_menu->Append(ID_MENU_EXIT, "E&xit\\tAlt-F4");
 
     wxMenu* help_menu = new wxMenu();
     help_menu->Append(ID_MENU_ABOUT, "&About RMS");
@@ -90,8 +129,8 @@ MainFrame::MainFrame()
     heading->SetFont(heading_font);
     root_sizer->Add(heading, 0, wxALL, 12);
 
-    WaveformPlaceholder* waveform = new WaveformPlaceholder(root);
-    root_sizer->Add(waveform, 1, wxEXPAND | wxLEFT | wxRIGHT, 12);
+    waveform_view_ = new WaveformView(root);
+    root_sizer->Add(waveform_view_, 1, wxEXPAND | wxLEFT | wxRIGHT, 12);
 
     wxBoxSizer* transport_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxButton* play_button = new wxButton(root, wxID_ANY, "Play");
@@ -102,17 +141,67 @@ MainFrame::MainFrame()
     transport_sizer->Add(play_button, 0, wxRIGHT, 8);
     transport_sizer->Add(stop_button, 0);
     transport_sizer->AddStretchSpacer(1);
-    transport_sizer->Add(
-        new wxStaticText(root, wxID_ANY, "No project loaded"),
-        0, wxALIGN_CENTER_VERTICAL);
+    project_status_ = new wxStaticText(root, wxID_ANY, "No project loaded");
+    transport_sizer->Add(project_status_, 0, wxALIGN_CENTER_VERTICAL);
 
-    root_sizer->Add(transport_sizer, 0,
-                    wxEXPAND | wxALL, 12);
+    root_sizer->Add(transport_sizer, 0, wxEXPAND | wxALL, 12);
     root->SetSizer(root_sizer);
 
     CreateStatusBar(1);
-    SetStatusText("Ready");
+    SetStatusText("Ready - open a WAV file to begin");
     Centre();
+}
+
+void MainFrame::on_open_audio(wxCommandEvent&) {
+    wxFileDialog dialog(
+        this,
+        "Open audio file",
+        wxEmptyString,
+        wxEmptyString,
+        "WAV audio (*.wav;*.wave)|*.wav;*.wave",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+    if (dialog.ShowModal() != wxID_OK)
+        return;
+
+    const std::string path = dialog.GetPath().ToStdString();
+    const audio::AudioImportReport report =
+        import_manager_.import_file_with_report(path);
+
+    if (!report.success) {
+        wxMessageBox(
+            wxString::FromUTF8(report.error_message.c_str()),
+            "Audio import failed",
+            wxOK | wxICON_ERROR,
+            this);
+        SetStatusText("Audio import failed");
+        return;
+    }
+
+    refresh_project_view();
+    SetStatusText("Loaded " + dialog.GetFilename());
+}
+
+void MainFrame::refresh_project_view() {
+    const audio::AudioProject& project = project_manager_.project();
+    waveform_view_->set_waveform(project.waveform());
+
+    const audio::AudioBuffer* buffer = project.audio();
+    if (buffer == 0) {
+        project_status_->SetLabel("No project loaded");
+        return;
+    }
+
+    const double duration =
+        static_cast<double>(buffer->frame_count()) /
+        static_cast<double>(buffer->sample_rate());
+    project_status_->SetLabel(wxString::Format(
+        "%s  |  %.2f s  |  %u Hz  |  %u ch",
+        wxFileName(project_manager_.file_path()).GetFullName(),
+        duration,
+        static_cast<unsigned int>(buffer->sample_rate()),
+        static_cast<unsigned int>(buffer->channel_count())));
+    Layout();
 }
 
 void MainFrame::on_exit(wxCommandEvent&) {
@@ -121,7 +210,7 @@ void MainFrame::on_exit(wxCommandEvent&) {
 
 void MainFrame::on_about(wxCommandEvent&) {
     wxMessageBox(
-        "RetroWorks Music Studio\n"
+        "RetroWorks Music Studio\\n"
         "A C++11 music analysis and retro audio production studio.",
         "About RMS",
         wxOK | wxICON_INFORMATION,
