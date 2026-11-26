@@ -14,6 +14,28 @@
 namespace rms {
 namespace audio {
 
+struct AudioImportPreflightEntry {
+    std::string file_path;
+    bool valid;
+    bool duplicate;
+    std::string error_message;
+
+    AudioImportPreflightEntry()
+        : file_path(), valid(false), duplicate(false), error_message() {}
+};
+
+struct AudioImportPreflightReport {
+    std::vector<AudioImportPreflightEntry> entries;
+    std::size_t valid_count;
+    std::size_t rejected_count;
+
+    AudioImportPreflightReport()
+        : entries(), valid_count(0), rejected_count(0) {}
+
+    std::size_t total_count() const { return entries.size(); }
+    bool all_valid() const { return rejected_count == 0; }
+};
+
 struct AudioImportBatchOptions {
     // Zero means no explicit file-count limit.
     std::size_t max_files;
@@ -90,6 +112,12 @@ public:
     bool load_history(std::string* error = 0);
     const std::string& history_store_path() const;
     const std::string& history_store_error() const;
+
+    AudioImportPreflightReport validate_files(
+        const std::vector<std::string>& paths) const;
+    AudioImportPreflightReport validate_files(
+        const std::vector<std::string>& paths,
+        const AudioImportConfig& config) const;
 
     AudioImportBatchReport import_files(
         const std::vector<std::string>& paths);
