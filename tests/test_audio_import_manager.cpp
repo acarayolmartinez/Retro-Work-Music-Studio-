@@ -202,6 +202,50 @@ int main() {
     assert(importer.history().size() == before_failed_clear);
     assert(!error.empty());
 
+    // Batch import processes every path and reports each result.
+    const std::string batch_wav_one = "rms_batch_one.wav";
+    const std::string batch_wav_two = "rms_batch_two.wav";
+    fixture(batch_wav_one);
+    fixture(batch_wav_two);
+    const std::vector<std::string> empty_paths;
+    const rms::audio::AudioImportBatchReport empty_batch =
+        importer.import_files(empty_paths);
+    assert(empty_batch.total_count() == 0);
+    assert(empty_batch.successful_count == 0);
+    assert(empty_batch.failed_count == 0);
+    assert(empty_batch.all_succeeded());
+
+    std::vector<std::string> successful_paths;
+    successful_paths.push_back(batch_wav_one);
+    successful_paths.push_back(batch_wav_two);
+    const rms::audio::AudioImportBatchReport successful_batch =
+        importer.import_files(successful_paths);
+    assert(successful_batch.total_count() == 2);
+    assert(successful_batch.successful_count == 2);
+    assert(successful_batch.failed_count == 0);
+    assert(successful_batch.all_succeeded());
+    assert(successful_batch.reports[0].success);
+    assert(successful_batch.reports[1].success);
+
+    std::vector<std::string> mixed_paths;
+    mixed_paths.push_back(batch_wav_one);
+    mixed_paths.push_back("rms_batch_missing.wav");
+    mixed_paths.push_back("rms_batch_unknown.mp3");
+    const rms::audio::AudioImportBatchReport mixed_batch =
+        importer.import_files(mixed_paths);
+    assert(mixed_batch.total_count() == 3);
+    assert(mixed_batch.successful_count == 1);
+    assert(mixed_batch.failed_count == 2);
+    assert(!mixed_batch.all_succeeded());
+    assert(mixed_batch.reports[0].success);
+    assert(!mixed_batch.reports[1].success);
+    assert(!mixed_batch.reports[2].success);
+    assert(!mixed_batch.reports[1].error_message.empty());
+    assert(!mixed_batch.reports[2].error_message.empty());
+
+    std::remove(batch_wav_one.c_str());
+    std::remove(batch_wav_two.c_str());
+
     std::remove(history_path.c_str());
     std::remove(wav_path.c_str());
     std::cout << "AudioImportManager tests passed.\n";
