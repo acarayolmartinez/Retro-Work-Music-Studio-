@@ -90,6 +90,22 @@ struct AudioImportSelectiveBatchReport {
     std::size_t skipped_count() const { return preflight.rejected_count; }
 };
 
+struct AudioImportRetryReport {
+    AudioImportBatchReport retries;
+    // Each index maps retries.reports[n] to the original batch report.
+    std::vector<std::size_t> source_report_indices;
+    std::size_t failed_count;
+    std::size_t excluded_count;
+    bool selection_valid;
+    std::string selection_error;
+
+    AudioImportRetryReport()
+        : retries(), source_report_indices(), failed_count(0),
+          excluded_count(0), selection_valid(true), selection_error() {}
+
+    std::size_t retried_count() const { return retries.processed_count(); }
+};
+
 class AudioImportManager {
 public:
     explicit AudioImportManager(AudioProjectManager& project_manager);
@@ -171,6 +187,19 @@ public:
     AudioImportSelectiveBatchReport import_selected_validated_files(
         const std::vector<std::string>& paths,
         const std::vector<std::size_t>& selected_indices,
+        const AudioImportConfig& config,
+        const AudioImportBatchOptions& options);
+
+    AudioImportRetryReport retry_failed_imports(
+        const AudioImportBatchReport& original,
+        const std::vector<std::size_t>& excluded_indices);
+    AudioImportRetryReport retry_failed_imports(
+        const AudioImportBatchReport& original,
+        const std::vector<std::size_t>& excluded_indices,
+        const AudioImportConfig& config);
+    AudioImportRetryReport retry_failed_imports(
+        const AudioImportBatchReport& original,
+        const std::vector<std::size_t>& excluded_indices,
         const AudioImportConfig& config,
         const AudioImportBatchOptions& options);
 
