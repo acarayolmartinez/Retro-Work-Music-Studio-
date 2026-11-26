@@ -243,6 +243,81 @@ int main() {
     assert(!mixed_batch.reports[1].error_message.empty());
     assert(!mixed_batch.reports[2].error_message.empty());
 
+    // Retry only failed entries from the original batch. Repair the missing
+    // WAV first; the unsupported MP3 remains a failed retry.
+    fixture("rms_batch_missing.wav");
+    const std::vector<std::size_t> no_exclusions;
+    const std::size_t retry_history_before = importer.history().size();
+    const rms::audio::AudioImportRetryReport retried_batch =
+        importer.retry_failed_imports(mixed_batch, no_exclusions);
+    assert(retried_batch.selection_valid);
+    assert(retried_batch.failed_count == 2);
+    assert(retried_batch.excluded_count == 0);
+    assert(retried_batch.retried_count() == 2);
+    assert(retried_batch.retries.successful_count == 1);
+    assert(retried_batch.retries.failed_count == 1);
+    assert(retried_batch.source_report_indices.size() == 2);
+    assert(retried_batch.source_report_indices[0] == 1);
+    assert(retried_batch.source_report_indices[1] == 2);
+    assert(retried_batch.retries.reports[0].file_path ==
+           mixed_batch.reports[1].file_path);
+    assert(importer.history().size() == retry_history_before + 2);
+
+    // Exclusions are expressed as indices in the original batch report.
+    std::vector<std::size_t> exclude_mp3;
+    exclude_mp3.push_back(2);
+    const rms::audio::AudioImportRetryReport partial_retry =
+        importer.retry_failed_imports(mixed_batch, exclude_mp3);
+    assert(partial_retry.selection_valid);
+    assert(partial_retry.failed_count == 1);
+    assert(partial_retry.excluded_count == 1);
+    assert(partial_retry.retried_count() == 1);
+    assert(partial_retry.source_report_indices.size() == 1);
+    assert(partial_retry.source_report_indices[0] == 1);
+    assert(partial_retry.retries.reports[0].success);
+
+    // A batch without failures produces a valid empty retry.
+    const rms::audio::AudioImportRetryReport no_retry =
+        importer.retry_failed_imports(successful_batch, no_exclusions);
+    assert(no_retry.selection_valid);
+    assert(no_retry.failed_count == 0);
+    assert(no_retry.retried_count() == 0);
+    assert(no_retry.source_report_indices.empty());
+
+    // Empty exclusions and all-failed-entry exclusions are both supported.
+    std::vector<std::size_t> exclude_both;
+    exclude_both.push_back(1);
+    exclude_both.push_back(2);
+    const rms::audio::AudioImportRetryReport fully_excluded =
+        importer.retry_failed_imports(mixed_batch, exclude_both);
+    assert(fully_excluded.selection_valid);
+    assert(fully_excluded.failed_count == 0);
+    assert(fully_excluded.excluded_count == 2);
+    assert(fully_excluded.retried_count() == 0);
+
+    // Invalid exclusion lists fail atomically without importing.
+    std::vector<std::size_t> duplicate_exclusions;
+    duplicate_exclusions.push_back(1);
+    duplicate_exclusions.push_back(1);
+    const std::size_t invalid_retry_history = importer.history().size();
+    const rms::audio::AudioImportRetryReport duplicate_retry =
+        importer.retry_failed_imports(mixed_batch, duplicate_exclusions);
+    assert(!duplicate_retry.selection_valid);
+    assert(duplicate_retry.selection_error.find("unique") !=
+           std::string::npos);
+    assert(duplicate_retry.retried_count() == 0);
+    assert(importer.history().size() == invalid_retry_history);
+
+    std::vector<std::size_t> invalid_exclusion;
+    invalid_exclusion.push_back(3);
+    const rms::audio::AudioImportRetryReport invalid_retry =
+        importer.retry_failed_imports(mixed_batch, invalid_exclusion);
+    assert(!invalid_retry.selection_valid);
+    assert(invalid_retry.selection_error.find("out of range") !=
+           std::string::npos);
+    assert(invalid_retry.retried_count() == 0);
+    assert(importer.history().size() == invalid_retry_history);
+
     // Preflight validates paths/configuration without importing or recording history.
     std::vector<std::string> preflight_paths;
     preflight_paths.push_back(batch_wav_one);
@@ -456,6 +531,7 @@ int main() {
 
     std::remove(batch_wav_one.c_str());
     std::remove(batch_wav_two.c_str());
+    std::remove("rms_batch_missing.wav");
 
     std::remove(history_path.c_str());
     std::remove(wav_path.c_str());
