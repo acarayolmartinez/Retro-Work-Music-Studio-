@@ -243,6 +243,54 @@ int main() {
     assert(!mixed_batch.reports[1].error_message.empty());
     assert(!mixed_batch.reports[2].error_message.empty());
 
+    // Configurable batch limits, fail-fast, cancellation and progress.
+    rms::audio::AudioImportBatchOptions limited_options;
+    limited_options.max_files = 1;
+    const rms::audio::AudioImportBatchReport limited_batch =
+        importer.import_files(successful_paths, limited_options);
+    assert(limited_batch.processed_count() == 1);
+    assert(limited_batch.pending_count == 1);
+    assert(limited_batch.limit_reached);
+    assert(!limited_batch.cancelled);
+
+    rms::audio::AudioImportBatchOptions fail_fast_options;
+    fail_fast_options.stop_on_error = true;
+    const rms::audio::AudioImportBatchReport fail_fast_batch =
+        importer.import_files(mixed_paths, fail_fast_options);
+    assert(fail_fast_batch.processed_count() == 2);
+    assert(fail_fast_batch.successful_count == 1);
+    assert(fail_fast_batch.failed_count == 1);
+    assert(fail_fast_batch.pending_count == 1);
+    assert(fail_fast_batch.stopped_on_error);
+
+    bool cancel_batch = false;
+    rms::audio::AudioImportBatchOptions cancel_options;
+    cancel_options.cancel_requested = &cancel_batch;
+    std::size_t progress_calls = 0;
+    cancel_options.progress_callback =
+        [&cancel_batch, &progress_calls](std::size_t processed,
+                                         std::size_t pending) {
+            ++progress_calls;
+            assert(processed == 1);
+            assert(pending == 1);
+            cancel_batch = true;
+        };
+    const rms::audio::AudioImportBatchReport cancelled_batch =
+        importer.import_files(successful_paths, cancel_options);
+    assert(cancelled_batch.processed_count() == 1);
+    assert(cancelled_batch.pending_count == 1);
+    assert(cancelled_batch.cancelled);
+    assert(progress_calls == 1);
+
+    bool cancel_before_start = true;
+    rms::audio::AudioImportBatchOptions pre_cancel_options;
+    pre_cancel_options.cancel_requested = &cancel_before_start;
+    const rms::audio::AudioImportBatchReport pre_cancelled_batch =
+        importer.import_files(successful_paths, pre_cancel_options);
+    assert(pre_cancelled_batch.processed_count() == 0);
+    assert(pre_cancelled_batch.pending_count == 2);
+    assert(pre_cancelled_batch.cancelled);
+
     std::remove(batch_wav_one.c_str());
     std::remove(batch_wav_two.c_str());
 
