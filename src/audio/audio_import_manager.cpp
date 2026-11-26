@@ -206,15 +206,59 @@ AudioImportBatchReport AudioImportManager::import_files(
 AudioImportBatchReport AudioImportManager::import_files(
     const std::vector<std::string>& paths,
     const AudioImportConfig& config) {
+    return import_files(paths, config, AudioImportBatchOptions());
+}
+
+AudioImportBatchReport AudioImportManager::import_files(
+    const std::vector<std::string>& paths,
+    const AudioImportBatchOptions& options) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return import_files(paths, config, options);
+}
+
+AudioImportBatchReport AudioImportManager::import_files(
+    const std::vector<std::string>& paths,
+    const AudioImportConfig& config,
+    const AudioImportBatchOptions& options) {
     AudioImportBatchReport batch;
-    batch.reports.reserve(paths.size());
-    for (std::vector<std::string>::const_iterator it = paths.begin();
-         it != paths.end(); ++it) {
-        const AudioImportReport report = import_file_with_report(*it, config);
+    const std::size_t allowed_count =
+        options.max_files == 0 || options.max_files > paths.size()
+            ? paths.size() : options.max_files;
+    batch.reports.reserve(allowed_count);
+
+    for (std::size_t index = 0; index < allowed_count; ++index) {
+        if (options.cancel_requested != 0 && *options.cancel_requested) {
+            batch.cancelled = true;
+            break;
+        }
+
+        const AudioImportReport report =
+            import_file_with_report(paths[index], config);
         batch.reports.push_back(report);
         if (report.success) ++batch.successful_count;
         else ++batch.failed_count;
+
+        const std::size_t pending = paths.size() - batch.reports.size();
+        if (options.progress_callback)
+            options.progress_callback(batch.reports.size(), pending);
+
+        if (!report.success && options.stop_on_error) {
+            batch.stopped_on_error = true;
+            break;
+        }
+        if (options.cancel_requested != 0 && *options.cancel_requested) {
+            batch.cancelled = true;
+            break;
+        }
     }
+
+    batch.pending_count = paths.size() - batch.reports.size();
+    batch.limit_reached = options.max_files != 0 &&
+        options.max_files < paths.size() &&
+        batch.reports.size() == options.max_files &&
+        !batch.cancelled && !batch.stopped_on_error;
     return batch;
 }
 
