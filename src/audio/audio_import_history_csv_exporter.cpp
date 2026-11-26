@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 namespace rms {
 namespace audio {
@@ -63,6 +64,24 @@ bool write_reports(const std::vector<AudioImportReport>& reports,
     return true;
 }
 
+std::vector<AudioImportReport> filtered_reports(
+    const std::vector<AudioImportReport>& reports,
+    AudioImportHistoryCsvFilter filter,
+    AudioImportHistoryCsvOrder order) {
+    std::vector<AudioImportReport> result;
+    for (std::vector<AudioImportReport>::const_iterator it = reports.begin();
+         it != reports.end(); ++it) {
+        if (filter == AudioImportHistoryCsvFilter::All ||
+            (filter == AudioImportHistoryCsvFilter::Successful && it->success) ||
+            (filter == AudioImportHistoryCsvFilter::Failed && !it->success)) {
+            result.push_back(*it);
+        }
+    }
+    if (order == AudioImportHistoryCsvOrder::NewestFirst)
+        std::reverse(result.begin(), result.end());
+    return result;
+}
+
 } // namespace
 
 bool AudioImportHistoryCsvExporter::save(const AudioImportHistory& history,
@@ -76,6 +95,18 @@ bool AudioImportHistoryCsvExporter::save(
     const std::string& path,
     std::string* error) {
     return write_reports(reports, path, error);
+}
+
+
+bool AudioImportHistoryCsvExporter::save_filtered(
+    const std::vector<AudioImportReport>& reports,
+    const std::string& path,
+    AudioImportHistoryCsvFilter filter,
+    AudioImportHistoryCsvOrder order,
+    std::string* error) {
+    const std::vector<AudioImportReport> selected =
+        filtered_reports(reports, filter, order);
+    return write_reports(selected, path, error);
 }
 
 } // namespace audio
