@@ -243,6 +243,45 @@ int main() {
     assert(!mixed_batch.reports[1].error_message.empty());
     assert(!mixed_batch.reports[2].error_message.empty());
 
+    // Preflight validates paths/configuration without importing or recording history.
+    std::vector<std::string> preflight_paths;
+    preflight_paths.push_back(batch_wav_one);
+    preflight_paths.push_back(batch_wav_one);
+    preflight_paths.push_back("rms_preflight_missing.wav");
+    preflight_paths.push_back("rms_preflight_unknown.mp3");
+    preflight_paths.push_back("");
+    const std::size_t preflight_history_before = importer.history().size();
+    const rms::audio::AudioImportPreflightReport preflight =
+        importer.validate_files(preflight_paths);
+    assert(preflight.total_count() == 5);
+    assert(preflight.valid_count == 1);
+    assert(preflight.rejected_count == 4);
+    assert(!preflight.all_valid());
+    assert(preflight.entries[0].valid);
+    assert(!preflight.entries[1].valid);
+    assert(preflight.entries[1].duplicate);
+    assert(preflight.entries[2].error_message.find("cannot be opened") !=
+           std::string::npos);
+    assert(preflight.entries[3].error_message.find("extension") !=
+           std::string::npos);
+    assert(preflight.entries[4].error_message.find("empty") !=
+           std::string::npos);
+    assert(importer.history().size() == preflight_history_before);
+
+    rms::audio::AudioImportConfig invalid_preflight_config;
+    invalid_preflight_config.frames_per_waveform_point = 0;
+    const rms::audio::AudioImportPreflightReport invalid_preflight =
+        importer.validate_files(successful_paths, invalid_preflight_config);
+    assert(invalid_preflight.valid_count == 0);
+    assert(invalid_preflight.rejected_count == 2);
+    assert(!invalid_preflight.entries[0].error_message.empty());
+
+    const rms::audio::AudioImportPreflightReport valid_preflight =
+        importer.validate_files(successful_paths);
+    assert(valid_preflight.all_valid());
+    assert(valid_preflight.valid_count == 2);
+    assert(valid_preflight.rejected_count == 0);
+
     // Configurable batch limits, fail-fast, cancellation and progress.
     rms::audio::AudioImportBatchOptions limited_options;
     limited_options.max_files = 1;
