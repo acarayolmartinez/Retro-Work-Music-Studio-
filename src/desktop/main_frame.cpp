@@ -201,7 +201,10 @@ void MainFrame::on_open_audio(wxCommandEvent&) {
 
 void MainFrame::on_play(wxCommandEvent&) {
     if (!playback_controller_.has_output()) {
-        SetStatusText("Audio output unavailable - build with PortAudio enabled");
+        const std::string error = playback_controller_.output_error();
+        SetStatusText(error.empty()
+            ? "Audio output is not available"
+            : wxString::FromUTF8(error.c_str()));
         return;
     }
 
@@ -254,9 +257,14 @@ void MainFrame::refresh_project_view() {
         return;
     }
 
-    playback_controller_.load(*buffer, true);
+    // The stream must use the imported file's native format. User settings
+    // retain the selected device and buffer size, not a forced WAV format.
+    audio::AudioSettings playback_settings = settings_manager_.settings();
+    playback_settings.sample_rate = buffer->sample_rate();
+    playback_settings.channel_count = buffer->channel_count();
+    playback_controller_.load(*buffer, playback_settings, true);
     const bool output_ready = playback_controller_.has_output();
-    play_button_->Enable(output_ready);
+    play_button_->Enable(true);
     stop_button_->Enable(output_ready);
 
     const double duration =
@@ -280,9 +288,8 @@ void MainFrame::refresh_project_view() {
 }
 
 void MainFrame::refresh_transport_status() {
-    const bool output_ready = playback_controller_.has_output();
-    play_button_->Enable(output_ready);
-    stop_button_->Enable(output_ready);
+    play_button_->Enable(playback_controller_.has_audio());
+    stop_button_->Enable(playback_controller_.has_output());
 }
 
 void MainFrame::on_exit(wxCommandEvent&) {
