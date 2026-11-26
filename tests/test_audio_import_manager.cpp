@@ -295,6 +295,9 @@ int main() {
     assert(fully_excluded.excluded_count == 2);
     assert(fully_excluded.retried_count() == 0);
 
+    // Restore the missing-file fixture state for later batch fail-fast tests.
+    std::remove("rms_batch_missing.wav");
+
     // Invalid exclusion lists fail atomically without importing.
     std::vector<std::size_t> duplicate_exclusions;
     duplicate_exclusions.push_back(1);
