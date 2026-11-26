@@ -6,6 +6,8 @@
 
 #include <wx/frame.h>
 
+#include <string>
+
 class wxStaticText;
 
 namespace rms {
@@ -27,6 +29,7 @@ private:
     audio::AudioImportManager import_manager_;
     WaveformView* waveform_view_;
     wxStaticText* project_status_;
+    std::string current_audio_name_;
 
     wxDECLARE_EVENT_TABLE();
 };
