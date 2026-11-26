@@ -195,6 +195,29 @@ bool AudioImportManager::import_wav(const std::string& path,
     return import_file(path, config, error);
 }
 
+AudioImportBatchReport AudioImportManager::import_files(
+    const std::vector<std::string>& paths) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return import_files(paths, config);
+}
+
+AudioImportBatchReport AudioImportManager::import_files(
+    const std::vector<std::string>& paths,
+    const AudioImportConfig& config) {
+    AudioImportBatchReport batch;
+    batch.reports.reserve(paths.size());
+    for (std::vector<std::string>::const_iterator it = paths.begin();
+         it != paths.end(); ++it) {
+        const AudioImportReport report = import_file_with_report(*it, config);
+        batch.reports.push_back(report);
+        if (report.success) ++batch.successful_count;
+        else ++batch.failed_count;
+    }
+    return batch;
+}
+
 AudioImportReport AudioImportManager::import_file_with_report(
     const std::string& path) {
     AudioImportConfig config;
