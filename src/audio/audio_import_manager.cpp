@@ -81,6 +81,22 @@ bool AudioImportManager::export_imports_csv(
     return AudioImportHistoryCsvExporter::save(reports, path, error);
 }
 
+bool AudioImportManager::export_filtered_history_csv(
+    const std::string& path, AudioImportHistoryCsvFilter filter,
+    AudioImportHistoryCsvOrder order, std::string* error) const {
+    return AudioImportHistoryCsvExporter::save_filtered(
+        history_.entries(), path, filter, order, error);
+}
+
+bool AudioImportManager::export_search_results_csv(
+    const std::string& query, const std::string& path,
+    AudioImportHistoryCsvOrder order, std::string* error) const {
+    const std::vector<AudioImportReport> matches =
+        history_.find_by_file_name(query);
+    return AudioImportHistoryCsvExporter::save_filtered(
+        matches, path, AudioImportHistoryCsvFilter::All, order, error);
+}
+
 bool AudioImportManager::configure_history_store(const std::string& path,
                                                   bool load_existing,
                                                   std::string* error) {
