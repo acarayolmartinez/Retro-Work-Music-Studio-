@@ -67,6 +67,24 @@ cmake --build build-desktop -j$(nproc)
 
 The default build keeps `RMS_BUILD_DESKTOP=OFF`, so the core application and tests do not require wxWidgets. In the desktop app, choose **File → Open Audio…** to load a PCM WAV file and view its waveform.
 
+Real playback is optional and uses PortAudio. On Linux Mint 22.x / Ubuntu 24.04, install its development package:
+
+```sh
+sudo apt install portaudio19-dev
+```
+
+Then configure the desktop target with audio output enabled:
+
+```sh
+cmake -S . -B build-desktop \
+  -DRMS_BUILD_DESKTOP=ON \
+  -DRMS_ENABLE_PORTAUDIO=ON
+cmake --build build-desktop -j$(nproc)
+./build-desktop/rms_desktop
+```
+
+When PortAudio is disabled, RMS can still import and display WAV files, but the Play and Stop controls remain unavailable.
+
 ### Source layout
 
 ```text
@@ -117,6 +135,24 @@ cmake --build build
 En Windows, ejecuta el archivo generado dentro de la carpeta de compilación (por ejemplo, `build\Debug\rms.exe` con un generador multiconfiguración).
 
 La aplicación de escritorio permite seleccionar **File → Open Audio…** para cargar un archivo WAV PCM y visualizar su forma de onda.
+
+La reproducción real es opcional y utiliza PortAudio. En Linux Mint 22.x / Ubuntu 24.04, instala sus cabeceras de desarrollo:
+
+```sh
+sudo apt install portaudio19-dev
+```
+
+Después configura la aplicación de escritorio con la salida de audio activada:
+
+```sh
+cmake -S . -B build-desktop \
+  -DRMS_BUILD_DESKTOP=ON \
+  -DRMS_ENABLE_PORTAUDIO=ON
+cmake --build build-desktop -j$(nproc)
+./build-desktop/rms_desktop
+```
+
+Si PortAudio está desactivado, RMS seguirá pudiendo importar WAV y mostrar su forma de onda, pero los controles Play y Stop no estarán disponibles.
 
 ### Estructura del código
 
