@@ -16,7 +16,7 @@ std::string csv_field(const std::string& value) {
         return value;
     std::string escaped("\"");
     for (std::string::const_iterator it = value.begin(); it != value.end(); ++it) {
-        if (*it == '\"') escaped += "\"\\"";
+        if (*it == '\"') escaped += "\"\"";
         else escaped += *it;
     }
     escaped += '\"';
