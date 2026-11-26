@@ -353,6 +353,65 @@ AudioImportSelectiveBatchReport AudioImportManager::import_validated_files(
     return result;
 }
 
+AudioImportSelectiveBatchReport AudioImportManager::import_selected_validated_files(
+    const std::vector<std::string>& paths,
+    const std::vector<std::size_t>& selected_indices) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return import_selected_validated_files(
+        paths, selected_indices, config, AudioImportBatchOptions());
+}
+
+AudioImportSelectiveBatchReport AudioImportManager::import_selected_validated_files(
+    const std::vector<std::string>& paths,
+    const std::vector<std::size_t>& selected_indices,
+    const AudioImportConfig& config) {
+    return import_selected_validated_files(
+        paths, selected_indices, config, AudioImportBatchOptions());
+}
+
+AudioImportSelectiveBatchReport AudioImportManager::import_selected_validated_files(
+    const std::vector<std::string>& paths,
+    const std::vector<std::size_t>& selected_indices,
+    const AudioImportConfig& config,
+    const AudioImportBatchOptions& options) {
+    AudioImportSelectiveBatchReport result;
+    result.preflight = validate_files(paths, config);
+
+    for (std::size_t i = 0; i < selected_indices.size(); ++i) {
+        if (selected_indices[i] >= result.preflight.total_count()) {
+            result.selection_valid = false;
+            result.selection_error = "Selected preflight index is out of range.";
+            return result;
+        }
+        for (std::size_t prior = 0; prior < i; ++prior) {
+            if (selected_indices[prior] == selected_indices[i]) {
+                result.selection_valid = false;
+                result.selection_error = "Selected preflight indices must be unique.";
+                return result;
+            }
+        }
+    }
+
+    result.selected_entry_indices = selected_indices;
+    std::vector<std::string> selected_paths;
+    selected_paths.reserve(selected_indices.size());
+    result.imported_entry_indices.reserve(selected_indices.size());
+
+    for (std::size_t i = 0; i < selected_indices.size(); ++i) {
+        const std::size_t entry_index = selected_indices[i];
+        if (result.preflight.entries[entry_index].valid) {
+            selected_paths.push_back(result.preflight.entries[entry_index].file_path);
+            result.imported_entry_indices.push_back(entry_index);
+        }
+    }
+
+    result.imports = import_files(selected_paths, config, options);
+    result.imported_entry_indices.resize(result.imports.processed_count());
+    return result;
+}
+
 AudioImportReport AudioImportManager::import_file_with_report(
     const std::string& path) {
     AudioImportConfig config;
