@@ -22,6 +22,7 @@ The repository now contains an initial CMake-based C++11 executable and a small 
 The entire application, including its desktop interface, will be developed in **C++11**.
 
 - C++11 as the required language standard across all RMS modules.
+- wxWidgets 3.2 or newer (within the wxWidgets 3.x line) for the optional native desktop target.
 - CMake for cross-platform build configuration.
 - A modular architecture separating core/domain, audio, DSP, analysis, and desktop UI.
 - PortAudio as the initial candidate for cross-platform audio I/O.
@@ -43,6 +44,28 @@ cmake --build build
 ```
 
 On Windows, run the generated executable from the build directory (for example, `build\Debug\rms.exe` with a multi-configuration generator).
+
+
+### Desktop GUI (optional)
+
+The native desktop application is an optional target and requires wxWidgets 3.2.
+
+On Linux Mint 22.x / Ubuntu 24.04, install the development package:
+
+```sh
+sudo apt update
+sudo apt install libwxgtk3.2-dev
+```
+
+Configure and build the desktop application:
+
+```sh
+cmake -S . -B build-desktop -DRMS_BUILD_DESKTOP=ON
+cmake --build build-desktop -j$(nproc)
+./build-desktop/rms_desktop
+```
+
+The default build keeps `RMS_BUILD_DESKTOP=OFF`, so the core application and tests do not require wxWidgets.
 
 ### Source layout
 
