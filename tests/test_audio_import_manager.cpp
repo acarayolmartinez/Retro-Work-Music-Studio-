@@ -229,6 +229,7 @@ int main() {
 
     std::vector<std::string> mixed_paths;
     mixed_paths.push_back(batch_wav_one);
+    std::remove("rms_batch_missing.wav");
     mixed_paths.push_back("rms_batch_missing.wav");
     mixed_paths.push_back("rms_batch_unknown.mp3");
     const rms::audio::AudioImportBatchReport mixed_batch =
