@@ -18,7 +18,7 @@
 - **Audio** — decoding, playback, device access, and audio abstractions.
 - **DSP** — FFT, filters, onset detection, pitch and tempo estimation.
 - **Analyzer** — analysis pipelines and result interpretation.
-- **Desktop** — native desktop interface and presentation logic.
+- **Desktop** — optional wxWidgets 3.2+ native desktop interface and presentation logic, built as the separate `rms_desktop` target.
 - **Infrastructure** — file system, serialization, logging, and persistence.
 
 Suggested source layout:
@@ -62,6 +62,7 @@ The proposed native extension is `.rms`. Initially it may be a documented JSON-b
 ## Important constraints / Restricciones
 
 - Do not couple domain models to desktop UI controls.
+- Keep wxWidgets optional and isolated from `rms_core`; the default build must remain headless-capable.
 - Do not assume one audio backend works identically on Windows, Linux, and macOS.
 - Keep DSP algorithms deterministic where possible.
 - Record sample rate, channel count, and analysis parameters with results.
