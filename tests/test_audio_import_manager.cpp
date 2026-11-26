@@ -322,6 +322,90 @@ int main() {
     assert(rejected_selective.imports.pending_count == 0);
     assert(rejected_selective.imported_entry_indices.empty());
 
+    // Explicit selection imports only the requested valid entries and keeps
+    // their original indices even when the selection is not in file order.
+    std::vector<std::size_t> chosen_indices;
+    chosen_indices.push_back(1);
+    const std::size_t selected_history_before = importer.history().size();
+    const rms::audio::AudioImportSelectiveBatchReport chosen_batch =
+        importer.import_selected_validated_files(successful_paths,
+                                                  chosen_indices);
+    assert(chosen_batch.selection_valid);
+    assert(chosen_batch.selection_error.empty());
+    assert(chosen_batch.selected_entry_indices.size() == 1);
+    assert(chosen_batch.selected_entry_indices[0] == 1);
+    assert(chosen_batch.imported_count() == 1);
+    assert(chosen_batch.imports.successful_count == 1);
+    assert(chosen_batch.imported_entry_indices.size() == 1);
+    assert(chosen_batch.imported_entry_indices[0] == 1);
+    assert(chosen_batch.imports.reports[0].file_path == batch_wav_two);
+    assert(importer.history().size() == selected_history_before + 1);
+
+    // Empty selection is valid and does not import anything.
+    const std::vector<std::size_t> no_indices;
+    const std::size_t empty_selection_history = importer.history().size();
+    const rms::audio::AudioImportSelectiveBatchReport empty_selection =
+        importer.import_selected_validated_files(successful_paths, no_indices);
+    assert(empty_selection.selection_valid);
+    assert(empty_selection.imported_count() == 0);
+    assert(empty_selection.imports.pending_count == 0);
+    assert(empty_selection.imported_entry_indices.empty());
+    assert(importer.history().size() == empty_selection_history);
+
+    // An index may refer to a rejected preflight entry; it is skipped safely.
+    std::vector<std::size_t> rejected_index;
+    rejected_index.push_back(1);
+    const rms::audio::AudioImportSelectiveBatchReport rejected_choice =
+        importer.import_selected_validated_files(preflight_paths,
+                                                  rejected_index);
+    assert(rejected_choice.selection_valid);
+    assert(rejected_choice.imported_count() == 0);
+    assert(rejected_choice.imported_entry_indices.empty());
+
+    // Repeated or out-of-range indices invalidate the selection atomically.
+    std::vector<std::size_t> repeated_indices;
+    repeated_indices.push_back(0);
+    repeated_indices.push_back(0);
+    const std::size_t invalid_selection_history = importer.history().size();
+    const rms::audio::AudioImportSelectiveBatchReport repeated_selection =
+        importer.import_selected_validated_files(successful_paths,
+                                                  repeated_indices);
+    assert(!repeated_selection.selection_valid);
+    assert(repeated_selection.selection_error.find("unique") !=
+           std::string::npos);
+    assert(repeated_selection.imported_count() == 0);
+    assert(importer.history().size() == invalid_selection_history);
+
+    std::vector<std::size_t> out_of_range_indices;
+    out_of_range_indices.push_back(2);
+    const rms::audio::AudioImportSelectiveBatchReport out_of_range_selection =
+        importer.import_selected_validated_files(successful_paths,
+                                                  out_of_range_indices);
+    assert(!out_of_range_selection.selection_valid);
+    assert(out_of_range_selection.selection_error.find("out of range") !=
+           std::string::npos);
+    assert(out_of_range_selection.imported_count() == 0);
+    assert(importer.history().size() == invalid_selection_history);
+
+    // Selection order is retained in the mapping and batch options still apply.
+    std::vector<std::size_t> reverse_indices;
+    reverse_indices.push_back(1);
+    reverse_indices.push_back(0);
+    rms::audio::AudioImportBatchOptions selected_limit;
+    selected_limit.max_files = 1;
+    const rms::audio::AudioImportSelectiveBatchReport selected_limited =
+        importer.import_selected_validated_files(successful_paths,
+                                                  reverse_indices,
+                                                  rms::audio::AudioImportConfig(),
+                                                  selected_limit);
+    assert(selected_limited.selection_valid);
+    assert(selected_limited.imported_count() == 1);
+    assert(selected_limited.imports.pending_count == 1);
+    assert(selected_limited.imports.limit_reached);
+    assert(selected_limited.imported_entry_indices.size() == 1);
+    assert(selected_limited.imported_entry_indices[0] == 1);
+    assert(selected_limited.imports.reports[0].file_path == batch_wav_two);
+
     // Configurable batch limits, fail-fast, cancellation and progress.
     rms::audio::AudioImportBatchOptions limited_options;
     limited_options.max_files = 1;
