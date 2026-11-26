@@ -75,8 +75,16 @@ struct AudioImportBatchReport {
 struct AudioImportSelectiveBatchReport {
     AudioImportPreflightReport preflight;
     AudioImportBatchReport imports;
+    // Original preflight indices requested by the caller.
+    std::vector<std::size_t> selected_entry_indices;
     // Each index maps imports.reports[n] to preflight.entries[index].
     std::vector<std::size_t> imported_entry_indices;
+    bool selection_valid;
+    std::string selection_error;
+
+    AudioImportSelectiveBatchReport()
+        : preflight(), imports(), selected_entry_indices(),
+          imported_entry_indices(), selection_valid(true), selection_error() {}
 
     std::size_t imported_count() const { return imports.processed_count(); }
     std::size_t skipped_count() const { return preflight.rejected_count; }
@@ -150,6 +158,19 @@ public:
         const AudioImportConfig& config);
     AudioImportSelectiveBatchReport import_validated_files(
         const std::vector<std::string>& paths,
+        const AudioImportConfig& config,
+        const AudioImportBatchOptions& options);
+
+    AudioImportSelectiveBatchReport import_selected_validated_files(
+        const std::vector<std::string>& paths,
+        const std::vector<std::size_t>& selected_indices);
+    AudioImportSelectiveBatchReport import_selected_validated_files(
+        const std::vector<std::string>& paths,
+        const std::vector<std::size_t>& selected_indices,
+        const AudioImportConfig& config);
+    AudioImportSelectiveBatchReport import_selected_validated_files(
+        const std::vector<std::string>& paths,
+        const std::vector<std::size_t>& selected_indices,
         const AudioImportConfig& config,
         const AudioImportBatchOptions& options);
 
