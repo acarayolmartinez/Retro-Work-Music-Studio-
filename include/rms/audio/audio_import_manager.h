@@ -36,15 +36,6 @@ struct AudioImportPreflightReport {
     bool all_valid() const { return rejected_count == 0; }
 };
 
-struct AudioImportSelectiveBatchReport {
-    AudioImportPreflightReport preflight;
-    AudioImportBatchReport imports;
-    // Each index maps imports.reports[n] to preflight.entries[index].
-    std::vector<std::size_t> imported_entry_indices;
-
-    std::size_t imported_count() const { return imports.processed_count(); }
-    std::size_t skipped_count() const { return preflight.rejected_count; }
-};
 
 struct AudioImportBatchOptions {
     // Zero means no explicit file-count limit.
@@ -79,6 +70,16 @@ struct AudioImportBatchReport {
     bool all_succeeded() const {
         return failed_count == 0 && pending_count == 0;
     }
+};
+
+struct AudioImportSelectiveBatchReport {
+    AudioImportPreflightReport preflight;
+    AudioImportBatchReport imports;
+    // Each index maps imports.reports[n] to preflight.entries[index].
+    std::vector<std::size_t> imported_entry_indices;
+
+    std::size_t imported_count() const { return imports.processed_count(); }
+    std::size_t skipped_count() const { return preflight.rejected_count; }
 };
 
 class AudioImportManager {
