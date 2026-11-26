@@ -70,6 +70,17 @@ bool AudioImportManager::clear_history(std::string* error) {
     return true;
 }
 
+bool AudioImportManager::export_history_csv(
+    const std::string& path, std::string* error) const {
+    return AudioImportHistoryCsvExporter::save(history_, path, error);
+}
+
+bool AudioImportManager::export_imports_csv(
+    const std::vector<AudioImportReport>& reports,
+    const std::string& path, std::string* error) const {
+    return AudioImportHistoryCsvExporter::save(reports, path, error);
+}
+
 bool AudioImportManager::configure_history_store(const std::string& path,
                                                   bool load_existing,
                                                   std::string* error) {
