@@ -10,6 +10,9 @@ namespace rms {
 namespace audio {
 
 // Exports import reports as UTF-8 CSV with RFC 4180-style field escaping.
+enum class AudioImportHistoryCsvOrder { OldestFirst, NewestFirst };
+enum class AudioImportHistoryCsvFilter { All, Successful, Failed };
+
 class AudioImportHistoryCsvExporter {
 public:
     static bool save(const AudioImportHistory& history,
@@ -18,6 +21,12 @@ public:
     static bool save(const std::vector<AudioImportReport>& reports,
                      const std::string& path,
                      std::string* error = 0);
+    static bool save_filtered(
+        const std::vector<AudioImportReport>& reports,
+        const std::string& path,
+        AudioImportHistoryCsvFilter filter,
+        AudioImportHistoryCsvOrder order = AudioImportHistoryCsvOrder::OldestFirst,
+        std::string* error = 0);
 };
 
 } // namespace audio
