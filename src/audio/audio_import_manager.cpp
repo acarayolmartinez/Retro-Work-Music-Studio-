@@ -316,6 +316,43 @@ AudioImportBatchReport AudioImportManager::import_files(
     return batch;
 }
 
+AudioImportSelectiveBatchReport AudioImportManager::import_validated_files(
+    const std::vector<std::string>& paths) {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return import_validated_files(paths, config, AudioImportBatchOptions());
+}
+
+AudioImportSelectiveBatchReport AudioImportManager::import_validated_files(
+    const std::vector<std::string>& paths,
+    const AudioImportConfig& config) {
+    return import_validated_files(paths, config, AudioImportBatchOptions());
+}
+
+AudioImportSelectiveBatchReport AudioImportManager::import_validated_files(
+    const std::vector<std::string>& paths,
+    const AudioImportConfig& config,
+    const AudioImportBatchOptions& options) {
+    AudioImportSelectiveBatchReport result;
+    result.preflight = validate_files(paths, config);
+
+    std::vector<std::string> valid_paths;
+    valid_paths.reserve(result.preflight.valid_count);
+    result.imported_entry_indices.reserve(result.preflight.valid_count);
+
+    for (std::size_t i = 0; i < result.preflight.entries.size(); ++i) {
+        if (result.preflight.entries[i].valid) {
+            valid_paths.push_back(result.preflight.entries[i].file_path);
+            result.imported_entry_indices.push_back(i);
+        }
+    }
+
+    result.imports = import_files(valid_paths, config, options);
+    result.imported_entry_indices.resize(result.imports.processed_count());
+    return result;
+}
+
 AudioImportReport AudioImportManager::import_file_with_report(
     const std::string& path) {
     AudioImportConfig config;
