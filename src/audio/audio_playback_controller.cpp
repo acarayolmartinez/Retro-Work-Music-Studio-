@@ -13,6 +13,12 @@ void AudioPlaybackController::load(const AudioBuffer& buffer,
     playback_.load(buffer, settings_manager_, enable_output);
 }
 
+void AudioPlaybackController::load(const AudioBuffer& buffer,
+                                   const AudioSettings& settings,
+                                   bool enable_output) {
+    playback_.load(buffer, settings, enable_output);
+}
+
 void AudioPlaybackController::unload() {
     playback_.unload();
 }
