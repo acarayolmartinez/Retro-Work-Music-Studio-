@@ -5,6 +5,7 @@
 #include "rms/audio/audio_import_history.h"
 #include "rms/audio/audio_import_report.h"
 #include "rms/audio/audio_project_manager.h"
+#include "rms/audio/audio_import_history_csv_exporter.h"
 
 #include <string>
 #include <vector>
@@ -25,6 +26,11 @@ public:
     // Persists an empty history when a store is configured. On failure,
     // the previous in-memory history is restored.
     bool clear_history(std::string* error = 0);
+    bool export_history_csv(const std::string& path,
+                            std::string* error = 0) const;
+    bool export_imports_csv(const std::vector<AudioImportReport>& reports,
+                            const std::string& path,
+                            std::string* error = 0) const;
 
     // Enables automatic persistence. Existing history is loaded when requested.
     bool configure_history_store(const std::string& path,
