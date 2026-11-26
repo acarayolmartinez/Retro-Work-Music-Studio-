@@ -5,6 +5,7 @@
 #include "rms/audio/audio_import_history_store.h"
 
 #include <exception>
+#include <fstream>
 #include <memory>
 
 namespace rms {
@@ -193,6 +194,59 @@ bool AudioImportManager::import_wav(const std::string& path,
                                     const AudioImportConfig& config,
                                     std::string* error) {
     return import_file(path, config, error);
+}
+
+AudioImportPreflightReport AudioImportManager::validate_files(
+    const std::vector<std::string>& paths) const {
+    AudioImportConfig config;
+    config.frames_per_waveform_point =
+        project_manager_.frames_per_waveform_point();
+    return validate_files(paths, config);
+}
+
+AudioImportPreflightReport AudioImportManager::validate_files(
+    const std::vector<std::string>& paths,
+    const AudioImportConfig& config) const {
+    AudioImportPreflightReport result;
+    result.entries.reserve(paths.size());
+
+    for (std::vector<std::string>::const_iterator it = paths.begin();
+         it != paths.end(); ++it) {
+        AudioImportPreflightEntry entry;
+        entry.file_path = *it;
+
+        if (it->empty()) {
+            entry.error_message = "File path is empty.";
+        } else if (!config.is_valid()) {
+            entry.error_message = config.validation_error();
+        } else if (!config.allows_path(*it)) {
+            entry.error_message =
+                "The file extension is disabled or unsupported by the import configuration.";
+        } else {
+            for (std::vector<AudioImportPreflightEntry>::const_iterator prior =
+                     result.entries.begin();
+                 prior != result.entries.end(); ++prior) {
+                if (prior->file_path == *it) {
+                    entry.duplicate = true;
+                    entry.error_message = "Duplicate file path in batch.";
+                    break;
+                }
+            }
+
+            if (entry.error_message.empty()) {
+                std::ifstream input(it->c_str(), std::ios::binary);
+                if (!input) {
+                    entry.error_message = "File does not exist or cannot be opened.";
+                }
+            }
+        }
+
+        entry.valid = entry.error_message.empty();
+        if (entry.valid) ++result.valid_count;
+        else ++result.rejected_count;
+        result.entries.push_back(entry);
+    }
+    return result;
 }
 
 AudioImportBatchReport AudioImportManager::import_files(
